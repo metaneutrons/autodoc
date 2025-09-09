@@ -154,7 +154,11 @@ impl DiagramProcessor {
         })?;
 
         // Render SVG to pixmap
-        resvg::render(&tree, resvg::tiny_skia::Transform::default(), &mut pixmap.as_mut());
+        resvg::render(
+            &tree,
+            resvg::tiny_skia::Transform::default(),
+            &mut pixmap.as_mut(),
+        );
 
         // Save PNG
         let png_path = output_dir.join(format!("{}.png", file_stem));
