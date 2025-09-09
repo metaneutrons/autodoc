@@ -10,11 +10,11 @@ pub struct DocumentMetadata {
     pub author: Option<Vec<String>>,
     pub date: Option<String>,
     pub subtitle: Option<String>,
-    
+
     // Language and localization
     pub lang: Option<String>,
     pub babel_lang: Option<String>,
-    
+
     // Document structure
     pub top_level_division: Option<String>,
     pub numbersections: Option<bool>,
@@ -23,7 +23,7 @@ pub struct DocumentMetadata {
     pub toc_depth: Option<u8>,
     pub lof: Option<bool>,
     pub lot: Option<bool>,
-    
+
     // Document class and layout
     pub documentclass: Option<String>,
     pub classoption: Option<Vec<String>>,
@@ -32,19 +32,19 @@ pub struct DocumentMetadata {
     pub mainfont: Option<String>,
     pub sansfont: Option<String>,
     pub monofont: Option<String>,
-    
+
     // Bibliography
     pub bibliography: Option<Vec<String>>,
     pub csl: Option<String>,
     pub link_citations: Option<bool>,
-    
+
     // PDF-specific
     pub colorlinks: Option<bool>,
     pub linkcolor: Option<String>,
     pub urlcolor: Option<String>,
     pub citecolor: Option<String>,
     pub book: Option<bool>,
-    
+
     // Custom metadata (extensible)
     #[serde(flatten)]
     pub custom: HashMap<String, serde_yaml::Value>,
@@ -116,7 +116,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.md");
         std::fs::write(&file_path, "# Test").unwrap();
-        
+
         let markdown_file = MarkdownFile {
             path: file_path.clone(),
             content: "# Test".to_string(),
@@ -125,7 +125,7 @@ mod tests {
             last_modified: std::time::SystemTime::now(),
             metadata: DocumentMetadata::default(),
         };
-        
+
         assert_eq!(markdown_file.path, file_path);
         assert_eq!(markdown_file.content, "# Test");
         assert!(!markdown_file.has_inline_mermaid);
@@ -140,7 +140,7 @@ mod tests {
             template_files: vec![],
             bibliography_files: vec![],
         };
-        
+
         assert!(files.markdown_files.is_empty());
         assert!(files.mermaid_files.is_empty());
         assert!(files.image_files.is_empty());
