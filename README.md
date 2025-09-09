@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/metaneutrons/autodoc/workflows/CI/badge.svg)](https://github.com/metaneutrons/autodoc/actions)
 [![Release](https://img.shields.io/github/v/release/metaneutrons/autodoc)](https://github.com/metaneutrons/autodoc/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/metaneutrons/autodoc/releases)
 
@@ -178,7 +178,7 @@ We use [Conventional Commits](https://conventionalcommits.org/) with types: `fea
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
