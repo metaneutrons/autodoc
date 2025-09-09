@@ -58,7 +58,7 @@ numbersections: true
 # colorlinks: true
 # bookmarks: true
 # bookmarksnumbered: true
-# pdfcreator: "AutoDoc"
+# pdfcreator: "docPilot"
 # pdfproducer: "Pandoc with XeLaTeX"
 
 # Eisvogel Template Options
@@ -87,7 +87,7 @@ numbersections: true
 
 # Project Setup
 
-This document serves as the main configuration file for your AutoDoc project.
+This document serves as the main configuration file for your docPilot project.
 All document settings are defined in the YAML frontmatter above.
 
 ## Configuration Guide
@@ -114,6 +114,6 @@ All document settings are defined in the YAML frontmatter above.
 1. Customize the frontmatter above for your document
 2. Add content in numbered markdown files
 3. Place images in the images/ directory
-4. Run autodoc build pdf to generate your document
+4. Run docpilot build pdf to generate your document
 
-For more information, visit: https://github.com/metaneutrons/autodoc
+For more information, visit: https://github.com/metaneutrons/docpilot

@@ -1,5 +1,5 @@
 use crate::config::ProjectConfig;
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 // TODO: Consider migrating from mermaid-rs to alternative that uses ab_glyph instead of rusttype
 // The current mermaid-rs dependency pulls in rusttype which is unmaintained (RUSTSEC-2021-0140)
 // Recommended migration: rusttype -> ab_glyph
@@ -32,7 +32,7 @@ impl DiagramProcessor {
 
     pub async fn process_all(&self, mermaid_files: &[PathBuf]) -> Result<()> {
         if self.mermaid.is_none() {
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: "Native Mermaid renderer not available".to_string(),
             });
         }
@@ -60,12 +60,12 @@ impl DiagramProcessor {
         let file_stem = file_path
             .file_stem()
             .and_then(|s| s.to_str())
-            .ok_or_else(|| AutoDocError::Build {
+            .ok_or_else(|| DocPilotError::Build {
                 message: format!("Invalid filename: {}", file_path.display()),
             })?;
 
         // Render to SVG using native mermaid-rs
-        let svg_content = mermaid.render(&content).map_err(|e| AutoDocError::Build {
+        let svg_content = mermaid.render(&content).map_err(|e| DocPilotError::Build {
             message: format!("Failed to render Mermaid diagram: {}", e),
         })?;
 
@@ -98,7 +98,7 @@ impl DiagramProcessor {
 
         // Find and replace ```mermaid blocks
         let mermaid_regex =
-            regex::Regex::new(r"```mermaid\n(.*?)\n```").map_err(|e| AutoDocError::Build {
+            regex::Regex::new(r"```mermaid\n(.*?)\n```").map_err(|e| DocPilotError::Build {
                 message: format!("Regex error: {}", e),
             })?;
 
@@ -143,13 +143,13 @@ impl DiagramProcessor {
         // Parse SVG
         let opt = usvg::Options::default();
 
-        let tree = usvg::Tree::from_str(svg_content, &opt).map_err(|e| AutoDocError::Build {
+        let tree = usvg::Tree::from_str(svg_content, &opt).map_err(|e| DocPilotError::Build {
             message: format!("Failed to parse SVG: {}", e),
         })?;
 
         let size = tree.size();
         let mut pixmap = resvg::tiny_skia::Pixmap::new(size.width() as u32, size.height() as u32)
-            .ok_or_else(|| AutoDocError::Build {
+            .ok_or_else(|| DocPilotError::Build {
             message: "Failed to create pixmap".to_string(),
         })?;
 
@@ -164,7 +164,7 @@ impl DiagramProcessor {
         let png_path = output_dir.join(format!("{}.png", file_stem));
         pixmap
             .save_png(&png_path)
-            .map_err(|e| AutoDocError::Build {
+            .map_err(|e| DocPilotError::Build {
                 message: format!("Failed to save PNG: {}", e),
             })?;
 

@@ -1,5 +1,5 @@
 use crate::config::{DiscoveredFiles, DocumentMetadata, MarkdownFile, ProjectConfig};
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -180,7 +180,7 @@ impl MetadataParser {
                 let remaining_content = &stripped[end + 5..];
 
                 let metadata: DocumentMetadata =
-                    serde_yaml::from_str(yaml_content).map_err(AutoDocError::Yaml)?;
+                    serde_yaml::from_str(yaml_content).map_err(DocPilotError::Yaml)?;
 
                 return Ok((metadata, remaining_content.to_string()));
             }
@@ -250,7 +250,7 @@ impl MetadataParser {
         merged
     }
 
-    /// Extract project configuration from Markdown files (replaces autodoc.yml)
+    /// Extract project configuration from Markdown files (replaces docpilot.yml)
     #[allow(dead_code)]
     pub fn extract_project_config(markdown_files: &[MarkdownFile]) -> ProjectConfig {
         let mut config = ProjectConfig::default();

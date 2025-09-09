@@ -15,12 +15,12 @@ mod init;
 mod templates;
 mod watcher;
 
-use errors::{AutoDocError, Result};
+use errors::{DocPilotError, Result};
 
 const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (", env!("VERGEN_GIT_SHA"), ")");
 
 #[derive(Parser)]
-#[command(name = "autodoc")]
+#[command(name = "docpilot")]
 #[command(about = "Automatic document generation with Pandoc")]
 #[command(version = VERSION)]
 struct Cli {
@@ -122,10 +122,10 @@ async fn main() -> Result<()> {
     // Initialize logging
     let level = if cli.verbose { "debug" } else { "info" };
     tracing_subscriber::fmt()
-        .with_env_filter(format!("autodoc={}", level))
+        .with_env_filter(format!("docpilot={}", level))
         .init();
 
-    info!("AutoDoc starting...");
+    info!("docPilot starting...");
 
     match cli.command {
         Commands::Init { name } => {
@@ -164,7 +164,7 @@ async fn main() -> Result<()> {
 
             if files.markdown_files.is_empty() {
                 error!("No markdown files found");
-                return Err(AutoDocError::Build {
+                return Err(DocPilotError::Build {
                     message: "No markdown files found in current directory".to_string(),
                 });
             }
@@ -409,24 +409,24 @@ async fn main() -> Result<()> {
 
         Commands::Config { action } => match action {
             Some(ConfigCommands::Init) => {
-                let config_path = PathBuf::from("autodoc.yml");
+                let config_path = PathBuf::from("docpilot.yml");
                 if config_path.exists() {
                     println!("⚠️  Config file already exists: {}", config_path.display());
                     return Ok(());
                 }
 
-                let default_config = config_file::AutoDocConfig::default();
+                let default_config = config_file::DocPilotConfig::default();
                 default_config.save_to_file(&config_path)?;
                 println!("📝 Created config file: {}", config_path.display());
             }
             Some(ConfigCommands::Show) => {
-                if let Some(config_path) = config_file::AutoDocConfig::find_config_file() {
-                    let config = config_file::AutoDocConfig::load_from_file(&config_path)?;
+                if let Some(config_path) = config_file::DocPilotConfig::find_config_file() {
+                    let config = config_file::DocPilotConfig::load_from_file(&config_path)?;
                     println!("📋 Configuration from: {}", config_path.display());
                     println!("{}", serde_yaml::to_string(&config).unwrap());
                 } else {
                     println!("📋 No config file found, using defaults");
-                    let default_config = config_file::AutoDocConfig::default();
+                    let default_config = config_file::DocPilotConfig::default();
                     println!("{}", serde_yaml::to_string(&default_config).unwrap());
                 }
             }

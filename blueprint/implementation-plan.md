@@ -1,7 +1,7 @@
-# AutoDoc Implementation Plan
+# docPilot Implementation Plan
 
 ## Overview
-This plan breaks down the AutoDoc implementation into manageable phases, each building upon the previous one. The goal is to have a working MVP quickly, then iteratively add advanced features.
+This plan breaks down the docPilot implementation into manageable phases, each building upon the previous one. The goal is to have a working MVP quickly, then iteratively add advanced features.
 
 ## Phase 1: Foundation & MVP (2-3 weeks)
 
@@ -16,7 +16,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Set up logging with `tracing` and `tracing-subscriber`
 - [ ] Create basic error types with `thiserror`
 
-**Deliverable**: `autodoc --help` works and shows command structure
+**Deliverable**: `docpilot --help` works and shows command structure
 
 ### Step 1.2: File Discovery (3-4 days)
 **Goal**: Discover and parse markdown files with metadata
@@ -29,7 +29,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Add dependency extraction from markdown (images, links)
 - [ ] Create `DiscoveredFiles` data structure
 
-**Deliverable**: `autodoc status` shows discovered files and metadata
+**Deliverable**: `docpilot status` shows discovered files and metadata
 
 ### Step 1.3: Basic PDF Builder (4-5 days)
 **Goal**: Generate PDF using pandoc with basic options
@@ -42,7 +42,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Create output directory management
 - [ ] Add basic error handling for pandoc failures
 
-**Deliverable**: `autodoc build pdf` generates working PDF
+**Deliverable**: `docpilot build pdf` generates working PDF
 
 ### Step 1.4: Dependency Validation (2-3 days)
 **Goal**: Check and validate external dependencies
@@ -54,7 +54,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Add dependency validation before builds
 - [ ] Implement `check` command with detailed status
 
-**Deliverable**: `autodoc check` validates all dependencies
+**Deliverable**: `docpilot check` validates all dependencies
 
 ### Step 1.5: Project Initialization (3-4 days)
 **Goal**: Initialize new projects with templates
@@ -66,7 +66,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Implement Eisvogel template download
 - [ ] Add git repository initialization (optional)
 
-**Deliverable**: `autodoc init` creates complete project structure
+**Deliverable**: `docpilot init` creates complete project structure
 
 **Phase 1 Milestone**: Working MVP that can initialize projects and build PDFs
 
@@ -82,7 +82,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Create `all` command for multiple formats
 - [ ] Add format validation and error handling
 
-**Deliverable**: `autodoc build docx` and `autodoc build html` work
+**Deliverable**: `docpilot build docx` and `docpilot build html` work
 
 ### Step 2.2: Native Diagram Generation (4-5 days)
 **Goal**: Replace Mermaid CLI with native Rust
@@ -107,7 +107,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Implement `templates` command with list/install/remove
 - [ ] Add custom template validation
 
-**Deliverable**: `autodoc templates` manages templates effectively
+**Deliverable**: `docpilot templates` manages templates effectively
 
 ### Step 2.4: File Watching & Auto-rebuild (4-5 days)
 **Goal**: Development workflow with auto-rebuild
@@ -119,14 +119,14 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 - [ ] Create `watch` command with status updates
 - [ ] Add build-and-open functionality
 
-**Deliverable**: `autodoc build --watch` auto-rebuilds on changes
+**Deliverable**: `docpilot build --watch` auto-rebuilds on changes
 
 ### Step 2.5: Configuration System (3-4 days)
 **Goal**: Advanced configuration management
 
 **Tasks**:
-- [ ] Create `AutoDocConfig` with TOML support
-- [ ] Implement configuration file discovery (autodoc.toml, .autodoc/)
+- [ ] Create `DocPilotConfig` with TOML support
+- [ ] Implement configuration file discovery (docpilot.toml, .docpilot/)
 - [ ] Add configuration validation with schemas
 - [ ] Create configuration merging (CLI > file > defaults)
 - [ ] Implement `config` command for management
@@ -153,7 +153,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 **Goal**: Extensibility through plugins
 
 **Tasks**:
-- [ ] Design `AutoDocPlugin` trait with lifecycle hooks
+- [ ] Design `docPilotPlugin` trait with lifecycle hooks
 - [ ] Implement `PluginManager` with registration
 - [ ] Add plugin discovery and loading
 - [ ] Create plugin configuration system
@@ -166,7 +166,7 @@ This plan breaks down the AutoDoc implementation into manageable phases, each bu
 **Goal**: Professional error reporting and diagnostics
 
 **Tasks**:
-- [ ] Create comprehensive `AutoDocError` types
+- [ ] Create comprehensive `DocPilotError` types
 - [ ] Implement `DiagnosticReporter` with rich context
 - [ ] Add error recovery and suggestions
 - [ ] Create debug mode with verbose output

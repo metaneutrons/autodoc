@@ -1,6 +1,6 @@
 use crate::config::{DocumentMetadata, MarkdownFile, ProjectConfig};
 use crate::discovery::MetadataParser;
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -39,13 +39,13 @@ impl PdfBuilder {
             Command::new("pandoc")
                 .args(&args)
                 .output()
-                .map_err(|e| AutoDocError::Build {
+                .map_err(|e| DocPilotError::Build {
                     message: format!("Failed to execute pandoc: {}", e),
                 })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: format!("Pandoc failed: {}", stderr),
             });
         }
@@ -227,13 +227,13 @@ impl DocxBuilder {
             Command::new("pandoc")
                 .args(&args)
                 .output()
-                .map_err(|e| AutoDocError::Build {
+                .map_err(|e| DocPilotError::Build {
                     message: format!("Failed to execute pandoc: {}", e),
                 })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: format!("Pandoc failed: {}", stderr),
             });
         }
@@ -314,13 +314,13 @@ impl HtmlBuilder {
             Command::new("pandoc")
                 .args(&args)
                 .output()
-                .map_err(|e| AutoDocError::Build {
+                .map_err(|e| DocPilotError::Build {
                     message: format!("Failed to execute pandoc: {}", e),
                 })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: format!("Pandoc failed: {}", stderr),
             });
         }

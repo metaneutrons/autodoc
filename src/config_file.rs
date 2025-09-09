@@ -1,12 +1,12 @@
 use crate::config::{DocumentMetadata, ProjectConfig};
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, info};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AutoDocConfig {
+pub struct DocPilotConfig {
     pub project: ProjectSettings,
     pub build: BuildSettings,
     pub templates: TemplateSettings,
@@ -34,7 +34,7 @@ pub struct TemplateSettings {
     pub docx_template: Option<String>,
 }
 
-impl Default for AutoDocConfig {
+impl Default for DocPilotConfig {
     fn default() -> Self {
         Self {
             project: ProjectSettings {
@@ -57,7 +57,7 @@ impl Default for AutoDocConfig {
     }
 }
 
-impl AutoDocConfig {
+impl DocPilotConfig {
     pub fn load_from_file(path: &Path) -> Result<Self> {
         if !path.exists() {
             debug!("Config file not found: {}", path.display());
@@ -67,8 +67,8 @@ impl AutoDocConfig {
         info!("Loading config from: {}", path.display());
 
         let content = fs::read_to_string(path)?;
-        let config: AutoDocConfig =
-            serde_yaml::from_str(&content).map_err(|e| AutoDocError::Config {
+        let config: DocPilotConfig =
+            serde_yaml::from_str(&content).map_err(|e| DocPilotError::Config {
                 message: format!("Invalid config file: {}", e),
             })?;
 
@@ -78,7 +78,7 @@ impl AutoDocConfig {
     pub fn save_to_file(&self, path: &Path) -> Result<()> {
         info!("Saving config to: {}", path.display());
 
-        let content = serde_yaml::to_string(self).map_err(|e| AutoDocError::Config {
+        let content = serde_yaml::to_string(self).map_err(|e| DocPilotError::Config {
             message: format!("Failed to serialize config: {}", e),
         })?;
 
@@ -88,10 +88,10 @@ impl AutoDocConfig {
 
     pub fn find_config_file() -> Option<PathBuf> {
         let candidates = [
-            "autodoc.yml",
-            "autodoc.yaml",
-            ".autodoc.yml",
-            ".autodoc.yaml",
+            "docpilot.yml",
+            "docpilot.yaml",
+            ".docpilot.yml",
+            ".docpilot.yaml",
         ];
 
         for candidate in &candidates {
@@ -145,8 +145,8 @@ mod tests {
     }
 
     #[test]
-    fn test_autodoc_config_default() {
-        let config = AutoDocConfig::default();
+    fn test_docpilot_config_default() {
+        let config = DocPilotConfig::default();
 
         assert_eq!(config.project.name, "document");
         assert_eq!(config.project.output_dir, Some(PathBuf::from("output")));
@@ -159,13 +159,13 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let config_path = temp_dir.path().join("test.yml");
 
-        let original_config = AutoDocConfig::default();
+        let original_config = DocPilotConfig::default();
         let save_result = original_config.save_to_file(&config_path);
         assert!(save_result.is_ok());
 
         assert!(config_path.exists());
 
-        let loaded_result = AutoDocConfig::load_from_file(&config_path);
+        let loaded_result = DocPilotConfig::load_from_file(&config_path);
         assert!(loaded_result.is_ok());
 
         let loaded_config = loaded_result.unwrap();
@@ -181,7 +181,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let missing_path = temp_dir.path().join("missing.yml");
 
-        let result = AutoDocConfig::load_from_file(&missing_path);
+        let result = DocPilotConfig::load_from_file(&missing_path);
         assert!(result.is_ok());
 
         // Should return default config when file doesn't exist
@@ -196,11 +196,11 @@ mod tests {
 
         fs::write(&config_path, "invalid: yaml: content: [").unwrap();
 
-        let result = AutoDocConfig::load_from_file(&config_path);
+        let result = DocPilotConfig::load_from_file(&config_path);
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            AutoDocError::Config { message } => {
+            DocPilotError::Config { message } => {
                 assert!(message.contains("Invalid config file"));
             }
             _ => panic!("Expected Config error"),
@@ -212,26 +212,26 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
 
-        let result = AutoDocConfig::find_config_file();
+        let result = DocPilotConfig::find_config_file();
         assert!(result.is_none());
     }
 
     #[test]
     fn test_find_config_file_exists() {
         let temp_dir = TempDir::new().unwrap();
-        let config_path = temp_dir.path().join("autodoc.yml");
+        let config_path = temp_dir.path().join("docpilot.yml");
         fs::write(&config_path, "project:\n  name: test").unwrap();
 
         let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
 
-        let result = AutoDocConfig::find_config_file();
+        let result = DocPilotConfig::find_config_file();
         assert!(result.is_some());
-        assert_eq!(result.unwrap(), PathBuf::from("autodoc.yml"));
+        assert_eq!(result.unwrap(), PathBuf::from("docpilot.yml"));
     }
 
     #[test]
     fn test_to_project_config() {
-        let mut config = AutoDocConfig::default();
+        let mut config = DocPilotConfig::default();
         config.project.name = "test-project".to_string();
         config.project.output_dir = Some(PathBuf::from("custom-output"));
 

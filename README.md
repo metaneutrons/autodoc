@@ -1,14 +1,14 @@
-# AutoDoc 🚀
+# docPilot 🚀
 
-[![CI](https://github.com/metaneutrons/autodoc/workflows/CI/badge.svg)](https://github.com/metaneutrons/autodoc/actions)
-[![Release](https://img.shields.io/github/v/release/metaneutrons/autodoc)](https://github.com/metaneutrons/autodoc/releases)
+[![CI](https://github.com/metaneutrons/docpilot/workflows/CI/badge.svg)](https://github.com/metaneutrons/docpilot/actions)
+[![Release](https://img.shields.io/github/v/release/metaneutrons/docpilot)](https://github.com/metaneutrons/docpilot/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org)
-[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/metaneutrons/autodoc/releases)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/metaneutrons/docpilot/releases)
 
 > **Automatic document generation tool that transforms Markdown into professional documents**
 
-AutoDoc is a powerful Rust-based CLI tool that orchestrates Pandoc and XeLaTeX to generate beautiful PDF, DOCX, and HTML documents from Markdown sources. Built for technical writers, researchers, and documentation teams who demand professional output without the complexity.
+docPilot is a powerful Rust-based CLI tool that orchestrates Pandoc and XeLaTeX to generate beautiful PDF, DOCX, and HTML documents from Markdown sources. Built for technical writers, researchers, and documentation teams who demand professional output without the complexity.
 
 ## ✨ Features
 
@@ -27,20 +27,20 @@ AutoDoc is a powerful Rust-based CLI tool that orchestrates Pandoc and XeLaTeX t
 
 #### Homebrew (macOS/Linux)
 ```bash
-brew install metaneutrons/tap/autodoc
+brew install metaneutrons/tap/docpilot
 ```
 
 #### Download from releases
 ```bash
-curl -L https://github.com/metaneutrons/autodoc/releases/latest/download/autodoc-linux-x86_64.tar.gz -o autodoc.tar.gz
-tar xzf autodoc.tar.gz
-sudo mv autodoc /usr/local/bin/
+curl -L https://github.com/metaneutrons/docpilot/releases/latest/download/docpilot-linux-x86_64.tar.gz -o docpilot.tar.gz
+tar xzf docpilot.tar.gz
+sudo mv docpilot /usr/local/bin/
 ```
 
 #### Build from source
 ```bash
-git clone https://github.com/metaneutrons/autodoc.git
-cd autodoc
+git clone https://github.com/metaneutrons/docpilot.git
+cd docpilot
 cargo install --path .
 ```
 
@@ -48,19 +48,19 @@ cargo install --path .
 
 ```bash
 # Initialize new project
-autodoc init my-document
+docpilot init my-document
 
 # Build PDF (requires pandoc + xelatex)
-autodoc build pdf
+docpilot build pdf
 
 # Build all formats
-autodoc build all
+docpilot build all
 
 # Check dependencies
-autodoc check
+docpilot check
 
 # Project status
-autodoc status
+docpilot status
 ```
 
 ## 📖 Example
@@ -75,7 +75,7 @@ lang: "en"
 
 # Introduction
 
-This document demonstrates AutoDoc's capabilities.
+This document demonstrates docPilot's capabilities.
 
 ## Features
 
@@ -85,13 +85,13 @@ This document demonstrates AutoDoc's capabilities.
 ```
 
 ```bash
-autodoc build pdf
+docpilot build pdf
 # → Generates professional PDF with Eisvogel template
 ```
 
 ## 🏗️ Architecture
 
-AutoDoc follows a **smart orchestration** approach:
+docPilot follows a **smart orchestration** approach:
 
 - **Discovery Engine** - Finds and analyzes Markdown files
 - **Metadata Parser** - Extracts YAML frontmatter with validation
@@ -107,7 +107,7 @@ AutoDoc follows a **smart orchestration** approach:
 **Optional (for PDF):**
 - [XeLaTeX](https://tug.org/xetex/) - LaTeX engine for PDF generation
 
-AutoDoc provides installation hints for missing dependencies and includes **native Mermaid diagram rendering** built-in.
+docPilot provides installation hints for missing dependencies and includes **native Mermaid diagram rendering** built-in.
 
 ## 📊 Commands
 
@@ -125,7 +125,7 @@ AutoDoc provides installation hints for missing dependencies and includes **nati
 ## 🎯 Configuration
 
 ```yaml
-# autodoc.yml
+# docpilot.yml
 project:
   name: "my-document"
   output_dir: "output"
@@ -190,7 +190,7 @@ This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**[Documentation](https://github.com/metaneutrons/autodoc/wiki) • [Releases](https://github.com/metaneutrons/autodoc/releases) • [Issues](https://github.com/metaneutrons/autodoc/issues)**
+**[Documentation](https://github.com/metaneutrons/docpilot/wiki) • [Releases](https://github.com/metaneutrons/docpilot/releases) • [Issues](https://github.com/metaneutrons/docpilot/issues)**
 
 Made with ❤️ and 🦀 by [metaneutrons](https://github.com/metaneutrons)
 
@@ -199,7 +199,7 @@ Made with ❤️ and 🦀 by [metaneutrons](https://github.com/metaneutrons)
 ## 🛠️ Development
 
 ### Pre-commit Hook
-AutoDoc includes an automatic formatting pre-commit hook:
+docPilot includes an automatic formatting pre-commit hook:
 - **Auto-formats** Rust code with `cargo fmt`
 - **Runs Clippy linter** with `-D warnings` (treats warnings as errors)
 - **Prevents CI failures** by fixing issues locally

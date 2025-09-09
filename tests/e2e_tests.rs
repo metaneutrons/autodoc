@@ -8,7 +8,7 @@ fn test_complete_workflow_init_to_build() {
     let temp_dir = TempDir::new().unwrap();
 
     // Step 1: Initialize project
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("init")
         .arg("--name")
@@ -21,7 +21,7 @@ fn test_complete_workflow_init_to_build() {
     assert!(temp_dir.path().join("01-introduction.md").exists());
 
     // Step 2: Check status
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("status");
 
     cmd.assert()
@@ -29,7 +29,7 @@ fn test_complete_workflow_init_to_build() {
         .stdout(predicate::str::contains("Markdown files: 2"));
 
     // Step 3: Check dependencies
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("check");
 
     cmd.assert()
@@ -37,7 +37,7 @@ fn test_complete_workflow_init_to_build() {
         .stdout(predicate::str::contains("DEPENDENCY CHECK"));
 
     // Step 4: Try to build (may fail if pandoc not available, but should handle gracefully)
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("build").arg("html"); // HTML is most likely to work without XeLaTeX
 
     // Either succeeds or fails with proper error message
@@ -55,7 +55,7 @@ fn test_config_workflow() {
     let temp_dir = TempDir::new().unwrap();
 
     // Step 1: Create config
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("config").arg("init");
 
     cmd.assert()
@@ -63,16 +63,16 @@ fn test_config_workflow() {
         .stdout(predicate::str::contains("Created config file"));
 
     // Step 2: Show config
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("config").arg("show");
 
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("Configuration from: autodoc.yml"))
+        .stdout(predicate::str::contains("Configuration from: docpilot.yml"))
         .stdout(predicate::str::contains("name: document"));
 
     // Step 3: Verify config file content
-    let config_content = fs::read_to_string(temp_dir.path().join("autodoc.yml")).unwrap();
+    let config_content = fs::read_to_string(temp_dir.path().join("docpilot.yml")).unwrap();
     assert!(config_content.contains("project:"));
     assert!(config_content.contains("build:"));
     assert!(config_content.contains("templates:"));
@@ -83,7 +83,7 @@ fn test_template_workflow() {
     let temp_dir = TempDir::new().unwrap();
 
     // Step 1: List templates (should be empty)
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("templates")
         .arg("list");
@@ -98,7 +98,7 @@ fn test_template_workflow() {
     fs::write(templates_dir.join("test.latex"), "\\documentclass{article}").unwrap();
 
     // Step 3: List templates again (should show our template)
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("templates")
         .arg("list");
@@ -111,7 +111,7 @@ fn test_template_workflow() {
     let source_template = temp_dir.path().join("source.latex");
     fs::write(&source_template, "\\documentclass{report}").unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("templates")
         .arg("install")
@@ -130,7 +130,7 @@ fn test_diagram_workflow() {
     let temp_dir = TempDir::new().unwrap();
 
     // Step 1: Check diagrams with no files
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("diagrams");
 
     cmd.assert()
@@ -150,7 +150,7 @@ fn test_diagram_workflow() {
     .unwrap();
 
     // Step 3: Process diagrams
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("diagrams");
 
     cmd.assert()
@@ -162,7 +162,7 @@ fn test_diagram_workflow() {
     assert!(temp_dir.path().join("output/diagrams").exists());
 
     // Step 5: Check status to see diagrams are detected
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("status");
 
     cmd.assert()
@@ -175,7 +175,7 @@ fn test_full_project_lifecycle() {
     let temp_dir = TempDir::new().unwrap();
 
     // 1. Initialize project
-    Command::cargo_bin("autodoc")
+    Command::cargo_bin("docpilot")
         .unwrap()
         .current_dir(temp_dir.path())
         .arg("init")
@@ -185,7 +185,7 @@ fn test_full_project_lifecycle() {
         .success();
 
     // 2. Create config
-    Command::cargo_bin("autodoc")
+    Command::cargo_bin("docpilot")
         .unwrap()
         .current_dir(temp_dir.path())
         .arg("config")
@@ -216,7 +216,7 @@ This is a test document with custom content.
     .unwrap();
 
     // 5. Check final status
-    Command::cargo_bin("autodoc")
+    Command::cargo_bin("docpilot")
         .unwrap()
         .current_dir(temp_dir.path())
         .arg("status")
@@ -226,7 +226,7 @@ This is a test document with custom content.
         .stdout(predicate::str::contains("Mermaid files:  1"));
 
     // 6. Process diagrams
-    Command::cargo_bin("autodoc")
+    Command::cargo_bin("docpilot")
         .unwrap()
         .current_dir(temp_dir.path())
         .arg("diagrams")
@@ -235,7 +235,7 @@ This is a test document with custom content.
         .stdout(predicate::str::contains("Processing 1 Mermaid diagrams"));
 
     // 7. Clean up
-    Command::cargo_bin("autodoc")
+    Command::cargo_bin("docpilot")
         .unwrap()
         .current_dir(temp_dir.path())
         .arg("clean")

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🧪 AutoDoc Test Suite"
+echo "🧪 docPilot Test Suite"
 echo "===================="
 
 echo ""
@@ -17,15 +17,15 @@ cargo test --test error_tests --quiet
 
 echo ""
 echo "🎯 Running Dependency Tests..."
-cargo test --bin autodoc dependencies::tests --quiet
+cargo test --bin docpilot dependencies::tests --quiet
 
 echo ""
 echo "📁 Running Template Tests..."
-cargo test --bin autodoc templates::tests --quiet
+cargo test --bin docpilot templates::tests --quiet
 
 echo ""
 echo "⚙️  Running Config Tests..."
-cargo test --bin autodoc config_file::tests --quiet
+cargo test --bin docpilot config_file::tests --quiet
 
 echo ""
 echo "✅ Test Suite Complete!"
@@ -36,4 +36,4 @@ echo "• Integration Tests: CLI commands and workflows"
 echo "• End-to-End Tests: Complete project lifecycles"
 echo "• Error Handling Tests: Edge cases and error scenarios"
 echo ""
-echo "🚀 AutoDoc is production-ready with comprehensive test coverage!"
+echo "🚀 docPilot is production-ready with comprehensive test coverage!"

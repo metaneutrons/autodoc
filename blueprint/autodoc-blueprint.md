@@ -1,4 +1,4 @@
-# AutoDoc:Blueprint Analysis
+# docPilot:Blueprint Analysis
 
 ## ✅ Makefile Feature Parity Check
 
@@ -34,7 +34,7 @@
 ### 1. Advanced Configuration System
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AutoDocConfig {
+pub struct DocPilotConfig {
     pub project: ProjectConfig,
     pub build: BuildConfig,
     pub templates: TemplateConfig,
@@ -50,7 +50,7 @@ pub struct BuildConfig {
     pub custom_pandoc_args: HashMap<String, Vec<String>>,
 }
 
-impl AutoDocConfig {
+impl DocPilotConfig {
     pub fn load_with_validation() -> Result<Self> {
         let config = Self::load_from_files()?;
         ConfigValidator::new()?.validate(&config)?;
@@ -58,8 +58,8 @@ impl AutoDocConfig {
     }
     
     fn load_from_files() -> Result<Self> {
-        // Load from: autodoc.toml, .autodoc/config.toml, 00-setup.md
-        // Priority: CLI args > autodoc.toml > 00-setup.md > defaults
+        // Load from: docpilot.toml, .docpilot/config.toml, 00-setup.md
+        // Priority: CLI args > docpilot.toml > 00-setup.md > defaults
         todo!()
     }
 }
@@ -96,7 +96,7 @@ impl BuildCache {
 
 ### 3. Plugin Architecture
 ```rust
-pub trait AutoDocPlugin: Send + Sync {
+pub trait docPilotPlugin: Send + Sync {
     fn name(&self) -> &str;
     fn version(&self) -> semver::Version;
     
@@ -127,7 +127,7 @@ pub struct CustomCommand {
 ### 4. Advanced Error Handling & Diagnostics
 ```rust
 #[derive(Debug, thiserror::Error)]
-pub enum AutoDocError {
+pub enum DocPilotError {
     #[error("Configuration error in {file}:{line}: {message}")]
     ConfigError { file: String, line: usize, message: String },
     
@@ -145,7 +145,7 @@ pub enum AutoDocError {
 }
 
 pub struct DiagnosticReporter {
-    errors: Vec<AutoDocError>,
+    errors: Vec<DocPilotError>,
     warnings: Vec<String>,
     suggestions: Vec<String>,
 }
@@ -155,11 +155,11 @@ impl DiagnosticReporter {
         // Rich error reporting with context, suggestions, and fixes
         for error in &self.errors {
             match error {
-                AutoDocError::ConfigError { file, line, message } => {
+                DocPilotError::ConfigError { file, line, message } => {
                     eprintln!("❌ Configuration Error");
                     eprintln!("   File: {file}:{line}");
                     eprintln!("   Issue: {message}");
-                    eprintln!("   💡 Suggestion: Run 'autodoc check-config' for validation");
+                    eprintln!("   💡 Suggestion: Run 'docpilot check-config' for validation");
                 }
                 // ... other error types with rich context
             }
@@ -208,7 +208,7 @@ impl PerformanceMonitor {
 ### 6. Advanced CLI with Shell Completions
 ```rust
 #[derive(Parser)]
-#[command(name = "autodoc")]
+#[command(name = "docpilot")]
 #[command(about = "Automatic document generation")]
 #[command(version)]
 struct Cli {
@@ -309,7 +309,7 @@ impl SelfUpdater {
     
     pub async fn perform_update(&self, update_info: &UpdateInfo) -> Result<()> {
         // Download, verify, backup current, install new
-        tracing::info!("Updating AutoDoc {} → {}", 
+        tracing::info!("Updating docPilot {} → {}", 
             self.current_version, update_info.version);
         
         self.backup_current_binary()?;
@@ -601,7 +601,7 @@ impl TemplateManager {
         let client = reqwest::Client::new();
         let response = client
             .get("https://api.github.com/repos/Wandmalfarbe/pandoc-latex-template/releases/latest")
-            .header("User-Agent", "AutoDoc")
+            .header("User-Agent", "docPilot")
             .send()
             .await?;
         
@@ -743,7 +743,7 @@ impl ProjectInitializer {
     }
     
     pub async fn initialize(&self) -> Result<()> {
-        tracing::info!("Initializing AutoDoc project: {}", self.project_name);
+        tracing::info!("Initializing docPilot project: {}", self.project_name);
         
         // Create directory structure
         self.create_directory_structure().await?;
@@ -767,7 +767,7 @@ impl ProjectInitializer {
         tracing::info!("Next steps:");
         tracing::info!("  1. Edit 00-setup.md to configure your document");
         tracing::info!("  2. Add your content in numbered markdown files");
-        tracing::info!("  3. Run 'autodoc build pdf' to generate your document");
+        tracing::info!("  3. Run 'docpilot build pdf' to generate your document");
         
         Ok(())
     }
@@ -905,7 +905,7 @@ This is a sample introduction section. You can edit this file and add more numbe
 
 1. Edit the metadata in `00-setup.md`
 2. Add your content in numbered markdown files (01-intro.md, 02-chapter.md, etc.)
-3. Run `autodoc build pdf` to generate your document
+3. Run `docpilot build pdf` to generate your document
 
 ## Features
 
@@ -946,7 +946,7 @@ This book covers...
 2. Set `documentclass: "book"` and `top-level-division: "chapter"`
 3. Create chapters as numbered files: 01-chapter1.md, 02-chapter2.md, etc.
 4. Use `# Chapter Title` for chapter headings
-5. Build with `autodoc build pdf`
+5. Build with `docpilot build pdf`
 
 ## Structure
 
@@ -1079,14 +1079,14 @@ Happy writing!
         
         if output.status.success() {
             // Create .gitignore
-            let gitignore_content = r#"# AutoDoc generated files
+            let gitignore_content = r#"# docPilot generated files
 output/
 *.pdf
 *.docx
 *.html
 
 # Temporary files
-.autodoc/
+.docpilot/
 *.tmp
 *.log
 

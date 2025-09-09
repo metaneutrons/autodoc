@@ -1,7 +1,7 @@
 use crate::builders::{DocxBuilder, HtmlBuilder, PdfBuilder};
 use crate::config::ProjectConfig;
 use crate::discovery::FileDiscovery;
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::Path;
 use std::sync::mpsc::channel;
@@ -32,14 +32,14 @@ impl FileWatcher {
             },
             notify::Config::default().with_poll_interval(Duration::from_secs(1)),
         )
-        .map_err(|e| AutoDocError::Build {
+        .map_err(|e| DocPilotError::Build {
             message: format!("Failed to create file watcher: {}", e),
         })?;
 
         // Watch current directory
         watcher
             .watch(Path::new("."), RecursiveMode::Recursive)
-            .map_err(|e| AutoDocError::Build {
+            .map_err(|e| DocPilotError::Build {
                 message: format!("Failed to start watching: {}", e),
             })?;
 
@@ -89,7 +89,7 @@ impl FileWatcher {
         let files = discovery.discover_all()?;
 
         if files.markdown_files.is_empty() {
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: "No markdown files found".to_string(),
             });
         }
@@ -123,7 +123,7 @@ impl FileWatcher {
                 builder.build(&files.markdown_files, &output_path).await?;
             }
             _ => {
-                return Err(AutoDocError::Build {
+                return Err(DocPilotError::Build {
                     message: format!("Unsupported format for watch: {}", format),
                 });
             }

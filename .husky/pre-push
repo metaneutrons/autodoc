@@ -3,7 +3,7 @@
 echo "🧪 Running tests before push..."
 
 # Run all tests single-threaded to avoid race conditions
-if ! cargo test --bin autodoc -- --test-threads=1; then
+if ! cargo test --bin docpilot -- --test-threads=1; then
     echo "❌ Tests failed. Fix failing tests before pushing."
     exit 1
 fi

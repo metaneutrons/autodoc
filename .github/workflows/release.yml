@@ -69,16 +69,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: autodoc-linux-x64
+            artifact: docpilot-linux-x64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: autodoc-windows-x64.exe
+            artifact: docpilot-windows-x64.exe
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact: autodoc-macos-x64
+            artifact: docpilot-macos-x64
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact: autodoc-macos-arm64
+            artifact: docpilot-macos-arm64
     
     steps:
     - uses: actions/checkout@v4
@@ -106,9 +106,9 @@ jobs:
       shell: bash
       run: |
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          cp target/${{ matrix.target }}/release/autodoc.exe ${{ matrix.artifact }}
+          cp target/${{ matrix.target }}/release/docpilot.exe ${{ matrix.artifact }}
         else
-          cp target/${{ matrix.target }}/release/autodoc ${{ matrix.artifact }}
+          cp target/${{ matrix.target }}/release/docpilot ${{ matrix.artifact }}
         fi
     
     - name: Upload artifact
@@ -131,14 +131,14 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ needs.version.outputs.tag }}
-        name: AutoDoc ${{ needs.version.outputs.version }}
+        name: docPilot ${{ needs.version.outputs.version }}
         draft: false
         prerelease: false
         generate_release_notes: true
         files: |
-          autodoc-linux-x64/autodoc-linux-x64
-          autodoc-windows-x64.exe/autodoc-windows-x64.exe
-          autodoc-macos-x64/autodoc-macos-x64
-          autodoc-macos-arm64/autodoc-macos-arm64
+          docpilot-linux-x64/docpilot-linux-x64
+          docpilot-windows-x64.exe/docpilot-windows-x64.exe
+          docpilot-macos-x64/docpilot-macos-x64
+          docpilot-macos-arm64/docpilot-macos-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,12 +1,12 @@
 [package]
-name = "autodoc-rs"
+name = "docpilot"
 version = "0.1.0"
 edition = "2021"
 description = "Automatic document generation with Pandoc - convert Markdown to PDF, DOCX, HTML with Mermaid diagrams"
 license = "GPL-3.0"
-repository = "https://github.com/metaneutrons/autodoc"
-homepage = "https://github.com/metaneutrons/autodoc"
-documentation = "https://docs.rs/autodoc"
+repository = "https://github.com/metaneutrons/docpilot"
+homepage = "https://github.com/metaneutrons/docpilot"
+documentation = "https://docs.rs/docpilot"
 readme = "README.md"
 keywords = ["pandoc", "markdown", "pdf", "documentation", "mermaid"]
 categories = ["command-line-utilities", "text-processing"]

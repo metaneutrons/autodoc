@@ -7,7 +7,7 @@ use tempfile::TempDir;
 fn test_build_with_no_markdown_files() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("build").arg("pdf");
 
     cmd.assert()
@@ -19,7 +19,7 @@ fn test_build_with_no_markdown_files() {
 fn test_build_with_invalid_format() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("build")
         .arg("invalid-format");
@@ -34,7 +34,7 @@ fn test_template_install_missing_file() {
     let temp_dir = TempDir::new().unwrap();
     let missing_file = temp_dir.path().join("missing.latex");
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("templates")
         .arg("install")
@@ -48,12 +48,12 @@ fn test_template_install_missing_file() {
 #[test]
 fn test_config_init_existing_file() {
     let temp_dir = TempDir::new().unwrap();
-    let config_path = temp_dir.path().join("autodoc.yml");
+    let config_path = temp_dir.path().join("docpilot.yml");
 
     // Create existing config file
     fs::write(&config_path, "existing: config").unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("config").arg("init");
 
     cmd.assert()
@@ -63,7 +63,7 @@ fn test_config_init_existing_file() {
 
 #[test]
 fn test_invalid_command_line_args() {
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.arg("--invalid-flag");
 
     cmd.assert()
@@ -79,7 +79,7 @@ fn test_build_missing_dependencies() {
     fs::write(temp_dir.path().join("test.md"), "# Test").unwrap();
 
     // Try to build (will likely fail due to missing pandoc in test environment)
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("build").arg("pdf");
 
     let output = cmd.output().unwrap();
@@ -111,7 +111,7 @@ fn test_permission_denied_scenarios() {
         fs::set_permissions(&readonly_dir, perms).unwrap();
 
         // Try to initialize in readonly directory
-        let mut cmd = Command::cargo_bin("autodoc").unwrap();
+        let mut cmd = Command::cargo_bin("docpilot").unwrap();
         cmd.current_dir(&readonly_dir).arg("init");
 
         let output = cmd.output().unwrap();
@@ -143,7 +143,7 @@ date: 2024-01-01
     fs::write(temp_dir.path().join("malformed.md"), malformed_content).unwrap();
 
     // Status command should handle malformed frontmatter gracefully
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("status");
 
     cmd.assert()
@@ -158,7 +158,7 @@ fn test_empty_mermaid_file() {
     // Create empty mermaid file
     fs::write(temp_dir.path().join("empty.mmd"), "").unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("diagrams");
 
     cmd.assert()
@@ -176,7 +176,7 @@ fn test_very_long_filename() {
 
     // This might fail on some filesystems, but should be handled gracefully
     if fs::write(&long_path, "# Test").is_ok() {
-        let mut cmd = Command::cargo_bin("autodoc").unwrap();
+        let mut cmd = Command::cargo_bin("docpilot").unwrap();
         cmd.current_dir(temp_dir.path()).arg("status");
 
         cmd.assert()
@@ -210,7 +210,7 @@ author: ["Тест Автор"]
 
     fs::write(temp_dir.path().join("unicode.md"), unicode_content).unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("status");
 
     cmd.assert()
@@ -230,7 +230,7 @@ fn test_concurrent_operations() {
         .map(|_| {
             let temp_path = temp_dir.path().to_path_buf();
             std::thread::spawn(move || {
-                let mut cmd = Command::cargo_bin("autodoc").unwrap();
+                let mut cmd = Command::cargo_bin("docpilot").unwrap();
                 cmd.current_dir(&temp_path).arg("status");
 
                 cmd.assert()

@@ -8,7 +8,7 @@ This is a sample introduction section. You can edit this file and add more numbe
 
 1. Edit the metadata in `00-setup.md`
 2. Add your content in numbered markdown files (01-intro.md, 02-chapter.md, etc.)
-3. Run `autodoc build pdf` to generate your document
+3. Run `docpilot build pdf` to generate your document
 
 ## Features
 

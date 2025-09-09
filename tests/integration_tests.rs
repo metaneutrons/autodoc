@@ -5,7 +5,7 @@ use tempfile::TempDir;
 
 #[test]
 fn test_cli_help() {
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.arg("--help");
 
     cmd.assert()
@@ -15,19 +15,19 @@ fn test_cli_help() {
 
 #[test]
 fn test_cli_version() {
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.arg("--version");
 
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("autodoc"));
+        .stdout(predicate::str::contains("docpilot"));
 }
 
 #[test]
 fn test_init_command() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("init")
         .arg("--name")
@@ -46,7 +46,7 @@ fn test_init_command() {
 fn test_check_command() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("check");
 
     cmd.assert()
@@ -58,7 +58,7 @@ fn test_check_command() {
 fn test_status_command_empty_project() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("status");
 
     cmd.assert()
@@ -74,7 +74,7 @@ fn test_status_command_with_files() {
     // Create test markdown file
     fs::write(temp_dir.path().join("test.md"), "# Test").unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("status");
 
     cmd.assert()
@@ -86,7 +86,7 @@ fn test_status_command_with_files() {
 fn test_config_init_command() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("config").arg("init");
 
     cmd.assert()
@@ -94,14 +94,14 @@ fn test_config_init_command() {
         .stdout(predicate::str::contains("Created config file"));
 
     // Verify config file was created
-    assert!(temp_dir.path().join("autodoc.yml").exists());
+    assert!(temp_dir.path().join("docpilot.yml").exists());
 }
 
 #[test]
 fn test_config_show_command() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("config").arg("show");
 
     cmd.assert()
@@ -113,7 +113,7 @@ fn test_config_show_command() {
 fn test_templates_list_command() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path())
         .arg("templates")
         .arg("list");
@@ -127,7 +127,7 @@ fn test_templates_list_command() {
 fn test_diagrams_command_no_files() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("diagrams");
 
     cmd.assert()
@@ -142,7 +142,7 @@ fn test_diagrams_command_with_mermaid() {
     // Create test mermaid file
     fs::write(temp_dir.path().join("test.mmd"), "graph TD\n    A --> B").unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("diagrams");
 
     cmd.assert()
@@ -159,7 +159,7 @@ fn test_clean_command() {
     fs::create_dir_all(&output_dir).unwrap();
     fs::write(output_dir.join("test.pdf"), "fake pdf").unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("clean");
 
     cmd.assert()
@@ -174,7 +174,7 @@ fn test_clean_command() {
 fn test_build_command_no_files() {
     let temp_dir = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.current_dir(temp_dir.path()).arg("build").arg("pdf");
 
     cmd.assert()
@@ -184,7 +184,7 @@ fn test_build_command_no_files() {
 
 #[test]
 fn test_invalid_command() {
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.arg("invalid-command");
 
     cmd.assert()
@@ -194,7 +194,7 @@ fn test_invalid_command() {
 
 #[test]
 fn test_build_help() {
-    let mut cmd = Command::cargo_bin("autodoc").unwrap();
+    let mut cmd = Command::cargo_bin("docpilot").unwrap();
     cmd.arg("build").arg("--help");
 
     cmd.assert()

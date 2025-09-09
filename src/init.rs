@@ -1,4 +1,4 @@
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use std::fs;
 use std::path::Path;
 use tempfile::TempDir;
@@ -15,7 +15,7 @@ impl ProjectInitializer {
     }
 
     pub async fn initialize(&self) -> Result<()> {
-        info!("Initializing AutoDoc project: {}", self.project_name);
+        info!("Initializing docPilot project: {}", self.project_name);
 
         // Create directory structure
         self.create_directory_structure().await?;
@@ -23,7 +23,7 @@ impl ProjectInitializer {
         // Try to download Eisvogel template (optional)
         if let Err(e) = self.download_eisvogel_template().await {
             tracing::warn!("Failed to download Eisvogel template: {}", e);
-            info!("Continuing without template - you can download it later with 'autodoc templates download-eisvogel'");
+            info!("Continuing without template - you can download it later with 'docpilot templates download-eisvogel'");
         }
 
         // Create configuration file
@@ -38,7 +38,7 @@ impl ProjectInitializer {
         println!("Next steps:");
         println!("  1. Edit 00-setup.md to configure your document");
         println!("  2. Add your content in numbered markdown files");
-        println!("  3. Run 'autodoc build pdf' to generate your document");
+        println!("  3. Run 'docpilot build pdf' to generate your document");
 
         Ok(())
     }
@@ -59,12 +59,12 @@ impl ProjectInitializer {
         info!("Downloading Eisvogel template...");
 
         let url = "https://github.com/Wandmalfarbe/pandoc-latex-template/releases/latest/download/Eisvogel.zip";
-        let response = reqwest::get(url).await.map_err(|e| AutoDocError::Build {
+        let response = reqwest::get(url).await.map_err(|e| DocPilotError::Build {
             message: format!("HTTP request failed: {}", e),
         })?;
 
         if !response.status().is_success() {
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: format!(
                     "Failed to download Eisvogel template: HTTP {}",
                     response.status()
@@ -72,7 +72,7 @@ impl ProjectInitializer {
             });
         }
 
-        let bytes = response.bytes().await.map_err(|e| AutoDocError::Build {
+        let bytes = response.bytes().await.map_err(|e| DocPilotError::Build {
             message: format!("Failed to read response: {}", e),
         })?;
 
@@ -83,13 +83,13 @@ impl ProjectInitializer {
 
         // Extract the template
         let file = fs::File::open(&zip_path)?;
-        let mut archive = ZipArchive::new(file).map_err(|e| AutoDocError::Build {
+        let mut archive = ZipArchive::new(file).map_err(|e| DocPilotError::Build {
             message: format!("Failed to open Eisvogel archive: {}", e),
         })?;
 
         // Find and extract the .latex file
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).map_err(|e| AutoDocError::Build {
+            let mut file = archive.by_index(i).map_err(|e| DocPilotError::Build {
                 message: format!("Failed to read archive entry: {}", e),
             })?;
             if file.name().ends_with(".latex") {
@@ -107,7 +107,7 @@ impl ProjectInitializer {
             }
         }
 
-        Err(AutoDocError::Build {
+        Err(DocPilotError::Build {
             message: "No .latex file found in Eisvogel archive".to_string(),
         })
     }
@@ -176,7 +176,7 @@ numbersections: true
 # colorlinks: true
 # bookmarks: true
 # bookmarksnumbered: true
-# pdfcreator: "AutoDoc"
+# pdfcreator: "docPilot"
 # pdfproducer: "Pandoc with XeLaTeX"
 
 # Eisvogel Template Options
@@ -205,7 +205,7 @@ numbersections: true
 
 # Project Setup
 
-This document serves as the main configuration file for your AutoDoc project.
+This document serves as the main configuration file for your docPilot project.
 All document settings are defined in the YAML frontmatter above.
 
 ## Configuration Guide
@@ -232,9 +232,9 @@ All document settings are defined in the YAML frontmatter above.
 1. Customize the frontmatter above for your document
 2. Add content in numbered markdown files
 3. Place images in the images/ directory
-4. Run autodoc build pdf to generate your document
+4. Run docpilot build pdf to generate your document
 
-For more information, visit: https://github.com/metaneutrons/autodoc
+For more information, visit: https://github.com/metaneutrons/docpilot
 "#,
             self.project_name, current_date
         );
@@ -250,7 +250,7 @@ For more information, visit: https://github.com/metaneutrons/autodoc
             let sample_content = format!(
                 r#"# Introduction
 
-Welcome to your new AutoDoc project: **{}**!
+Welcome to your new docPilot project: **{}**!
 
 This is a sample introduction file. You can edit this content or create additional numbered markdown files to build your document.
 
@@ -258,11 +258,11 @@ This is a sample introduction file. You can edit this content or create addition
 
 1. Edit the metadata in 00-setup.md
 2. Add your content in numbered markdown files
-3. Run autodoc build pdf to generate your document
+3. Run docpilot build pdf to generate your document
 
 ## Features
 
-AutoDoc provides:
+docPilot provides:
 - Professional PDF generation with LaTeX
 - Multi-format output (PDF, DOCX, HTML)
 - Template management

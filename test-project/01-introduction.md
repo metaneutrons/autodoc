@@ -1,6 +1,6 @@
 # Introduction
 
-This is a test document for AutoDoc.
+This is a test document for docPilot.
 
 ## Features
 
@@ -10,6 +10,6 @@ This is a test document for AutoDoc.
 
 ```mermaid
 graph LR
-    A[Markdown] --> B[AutoDoc]
+    A[Markdown] --> B[docPilot]
     B --> C[PDF]
 ```

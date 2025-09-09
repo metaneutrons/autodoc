@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum AutoDocError {
+pub enum DocPilotError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
@@ -25,4 +25,4 @@ pub enum AutoDocError {
     FileNotFound { path: String },
 }
 
-pub type Result<T> = std::result::Result<T, AutoDocError>;
+pub type Result<T> = std::result::Result<T, DocPilotError>;

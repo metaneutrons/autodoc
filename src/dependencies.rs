@@ -1,4 +1,4 @@
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use std::process::Command;
 use tracing::{debug, info};
 use which::which;
@@ -50,7 +50,7 @@ impl DependencyChecker {
                 ));
             }
 
-            return Err(AutoDocError::Dependency {
+            return Err(DocPilotError::Dependency {
                 tool: "multiple".to_string(),
                 hint: error_msg,
             });
@@ -99,7 +99,7 @@ impl DependencyChecker {
         let output = Command::new(cmd)
             .args(args)
             .output()
-            .map_err(|e| AutoDocError::Build {
+            .map_err(|e| DocPilotError::Build {
                 message: format!("Failed to execute {}: {}", cmd, e),
             })?;
 
@@ -176,7 +176,7 @@ mod tests {
             Ok(()) => {
                 // Dependencies available
             }
-            Err(AutoDocError::Dependency { tool: _, hint }) => {
+            Err(DocPilotError::Dependency { tool: _, hint }) => {
                 assert!(hint.contains("Missing required dependencies"));
             }
             Err(_) => panic!("Unexpected error type"),
@@ -191,7 +191,7 @@ mod tests {
             Ok(()) => {
                 // Dependencies available
             }
-            Err(AutoDocError::Dependency { tool: _, hint }) => {
+            Err(DocPilotError::Dependency { tool: _, hint }) => {
                 assert!(hint.contains("docx format"));
             }
             Err(_) => panic!("Unexpected error type"),
@@ -206,7 +206,7 @@ mod tests {
             Ok(()) => {
                 // Dependencies available
             }
-            Err(AutoDocError::Dependency { tool: _, hint }) => {
+            Err(DocPilotError::Dependency { tool: _, hint }) => {
                 assert!(hint.contains("html format"));
             }
             Err(_) => panic!("Unexpected error type"),
@@ -221,7 +221,7 @@ mod tests {
             Ok(()) => {
                 // All dependencies available
             }
-            Err(AutoDocError::Dependency { tool: _, hint }) => {
+            Err(DocPilotError::Dependency { tool: _, hint }) => {
                 assert!(hint.contains("all format"));
             }
             Err(_) => panic!("Unexpected error type"),

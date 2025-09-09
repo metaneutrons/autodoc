@@ -1,4 +1,4 @@
-use crate::errors::{AutoDocError, Result};
+use crate::errors::{DocPilotError, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, info};
@@ -18,11 +18,11 @@ impl TemplateManager {
         self.ensure_templates_dir()?;
 
         let url = "https://raw.githubusercontent.com/Wandmalfarbe/pandoc-latex-template/v2.4.2/eisvogel.latex";
-        let response = reqwest::get(url).await.map_err(|e| AutoDocError::Build {
+        let response = reqwest::get(url).await.map_err(|e| DocPilotError::Build {
             message: format!("Failed to download template: {}", e),
         })?;
 
-        let content = response.text().await.map_err(|e| AutoDocError::Build {
+        let content = response.text().await.map_err(|e| DocPilotError::Build {
             message: format!("Failed to read template content: {}", e),
         })?;
 
@@ -62,16 +62,18 @@ impl TemplateManager {
         info!("Installing template from: {}", source_path.display());
 
         if !source_path.exists() {
-            return Err(AutoDocError::Build {
+            return Err(DocPilotError::Build {
                 message: format!("Template file not found: {}", source_path.display()),
             });
         }
 
         self.ensure_templates_dir()?;
 
-        let file_name = source_path.file_name().ok_or_else(|| AutoDocError::Build {
-            message: "Invalid template file path".to_string(),
-        })?;
+        let file_name = source_path
+            .file_name()
+            .ok_or_else(|| DocPilotError::Build {
+                message: "Invalid template file path".to_string(),
+            })?;
 
         let dest_path = self.templates_dir.join(file_name);
         fs::copy(source_path, &dest_path)?;
@@ -168,7 +170,7 @@ mod tests {
 
         assert!(result.is_err());
         match result.unwrap_err() {
-            AutoDocError::Build { message } => {
+            DocPilotError::Build { message } => {
                 assert!(message.contains("Template file not found"));
             }
             _ => panic!("Expected Build error"),
