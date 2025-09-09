@@ -1,5 +1,8 @@
 use crate::config::ProjectConfig;
 use crate::errors::{AutoDocError, Result};
+// TODO: Consider migrating from mermaid-rs to alternative that uses ab_glyph instead of rusttype
+// The current mermaid-rs dependency pulls in rusttype which is unmaintained (RUSTSEC-2021-0140)
+// Recommended migration: rusttype -> ab_glyph
 use mermaid_rs::Mermaid;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -135,7 +138,7 @@ impl DiagramProcessor {
         output_dir: &Path,
         file_stem: &str,
     ) -> Result<()> {
-        use resvg::usvg::{self, TreeParsing};
+        use resvg::usvg;
 
         // Parse SVG
         let opt = usvg::Options::default();
@@ -144,15 +147,14 @@ impl DiagramProcessor {
             message: format!("Failed to parse SVG: {}", e),
         })?;
 
-        let size = tree.size;
+        let size = tree.size();
         let mut pixmap = resvg::tiny_skia::Pixmap::new(size.width() as u32, size.height() as u32)
             .ok_or_else(|| AutoDocError::Build {
             message: "Failed to create pixmap".to_string(),
         })?;
 
         // Render SVG to pixmap
-        resvg::Tree::from_usvg(&tree)
-            .render(resvg::tiny_skia::Transform::default(), &mut pixmap.as_mut());
+        resvg::render(&tree, resvg::tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
         // Save PNG
         let png_path = output_dir.join(format!("{}.png", file_stem));

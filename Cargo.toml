@@ -29,7 +29,7 @@ pisnge = "0.2.5"
 svg2pdf = "0.13.0"
 notify = "6.0"
 mermaid-rs = "0.1.1"
-resvg = "0.37"
+resvg = "0.45"
 
 [dev-dependencies]
 tokio-test = "0.4"
@@ -38,3 +38,17 @@ assert_cmd = "2.0"
 predicates = "3.0"
 [build-dependencies]
 vergen = { version = "8.0", features = ["git", "gitcl"] }
+
+# Security patches for unmaintained/unsound dependencies
+[patch.crates-io]
+# TODO: Fix const-cstr security issue (RUSTSEC-2023-0020)
+# const-cstr v0.3.0 is unmaintained and unsound - violates safety contract
+# Dependency chain: pisnge -> font-kit -> yeslogic-fontconfig-sys -> const-cstr
+# 
+# Potential solutions:
+# 1. Update pisnge to newer version that doesn't use font-kit
+# 2. Replace pisnge with alternative PNG processing library
+# 3. Wait for font-kit to update yeslogic-fontconfig-sys dependency
+# 4. Use cargo patch to replace const-cstr with const-str or cstr alternatives
+#
+# For now, this is a transitive dependency issue that requires upstream fixes
