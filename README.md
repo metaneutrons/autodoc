@@ -6,7 +6,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/metaneutrons/autodoc/releases)
 
-> **Enterprise-grade document generation tool that transforms Markdown into professional documents**
+> **Automatic document generation tool that transforms Markdown into professional documents**
 
 AutoDoc is a powerful Rust-based CLI tool that orchestrates Pandoc and XeLaTeX to generate beautiful PDF, DOCX, and HTML documents from Markdown sources. Built for technical writers, researchers, and documentation teams who demand professional output without the complexity.
 
