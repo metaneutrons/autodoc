@@ -112,7 +112,8 @@ impl DiagramProcessor {
                             .join(&diagram_filename);
 
                         if fs::create_dir_all(diagram_path.parent().unwrap()).is_ok()
-                            && fs::write(&diagram_path, &svg).is_ok() {
+                            && fs::write(&diagram_path, &svg).is_ok()
+                        {
                             let replacement = format!("![Diagram]({})", diagram_path.display());
                             processed_content =
                                 processed_content.replace(&captures[0], &replacement);
