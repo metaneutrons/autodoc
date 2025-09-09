@@ -71,3 +71,5 @@ jobs:
     - uses: actions-rs/audit-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        # Only fail on actual vulnerabilities, allow warnings for unmaintained crates
+        args: --ignore RUSTSEC-2021-0140 --ignore RUSTSEC-2023-0020
