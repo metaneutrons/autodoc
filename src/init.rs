@@ -61,76 +61,49 @@ impl ProjectInitializer {
     async fn download_eisvogel_template(&self) -> Result<()> {
         info!("Downloading Eisvogel template...");
         
-        let client = reqwest::Client::new();
+        let url = "https://github.com/Wandmalfarbe/pandoc-latex-template/releases/latest/download/Eisvogel.zip";
+        let response = reqwest::get(url).await
+            .map_err(|e| AutoDocError::Build { message: format!("HTTP request failed: {}", e) })?;
         
-        // Get latest release info from GitHub API
-        let response = client
-            .get("https://api.github.com/repos/Wandmalfarbe/pandoc-latex-template/releases/latest")
-            .header("User-Agent", "AutoDoc")
-            .send()
-            .await
-            .map_err(|e| AutoDocError::Build { 
-                message: format!("Failed to fetch Eisvogel release info: {}", e) 
-            })?;
+        if !response.status().is_success() {
+            return Err(AutoDocError::Build {
+                message: format!("Failed to download Eisvogel template: HTTP {}", response.status()),
+            });
+        }
         
-        let release: serde_json::Value = response.json().await
-            .map_err(|e| AutoDocError::Build { 
-                message: format!("Failed to parse GitHub API response: {}", e) 
-            })?;
+        let bytes = response.bytes().await
+            .map_err(|e| AutoDocError::Build { message: format!("Failed to read response: {}", e) })?;
         
-        let download_url = release["assets"][0]["browser_download_url"]
-            .as_str()
-            .ok_or_else(|| AutoDocError::Build { 
-                message: "No download URL found in GitHub release".to_string() 
-            })?;
-        
-        debug!("Downloading from: {}", download_url);
-        
-        // Download and extract
-        let zip_response = client.get(download_url).send().await
-            .map_err(|e| AutoDocError::Build { 
-                message: format!("Failed to download Eisvogel template: {}", e) 
-            })?;
-        
-        let zip_bytes = zip_response.bytes().await
-            .map_err(|e| AutoDocError::Build { 
-                message: format!("Failed to read Eisvogel template: {}", e) 
-            })?;
-        
+        // Create temporary directory for extraction
         let temp_dir = TempDir::new()?;
         let zip_path = temp_dir.path().join("eisvogel.zip");
-        fs::write(&zip_path, zip_bytes)?;
+        fs::write(&zip_path, &bytes)?;
         
-        // Extract template
+        // Extract the template
         let file = fs::File::open(&zip_path)?;
         let mut archive = ZipArchive::new(file)
-            .map_err(|e| AutoDocError::Build { 
-                message: format!("Failed to open Eisvogel archive: {}", e) 
+            .map_err(|e| AutoDocError::Build {
+                message: format!("Failed to open Eisvogel archive: {}", e),
             })?;
         
+        // Find and extract the .latex file
         for i in 0..archive.len() {
             let mut file = archive.by_index(i)
-                .map_err(|e| AutoDocError::Build { 
-                    message: format!("Failed to read archive entry: {}", e) 
-                })?;
-            
-            if file.name().ends_with("eisvogel.latex") && !file.name().contains("multi-file") {
+                .map_err(|e| AutoDocError::Build { message: format!("Failed to read archive entry: {}", e) })?;
+            if file.name().ends_with(".latex") {
                 let mut contents = Vec::new();
-                std::io::copy(&mut file, &mut contents)
-                    .map_err(|e| AutoDocError::Build { 
-                        message: format!("Failed to extract template: {}", e) 
-                    })?;
+                std::io::copy(&mut file, &mut contents)?;
                 
-                let output_path = Path::new("templates").join("eisvogel.latex");
-                fs::write(output_path, contents)?;
+                let template_path = Path::new("templates").join("eisvogel.latex");
+                fs::write(&template_path, contents)?;
                 
-                info!("✅ Eisvogel template downloaded successfully");
+                info!("✅ Downloaded Eisvogel template to: {}", template_path.display());
                 return Ok(());
             }
         }
         
-        Err(AutoDocError::Build { 
-            message: "Eisvogel template not found in archive".to_string() 
+        Err(AutoDocError::Build {
+            message: "No .latex file found in Eisvogel archive".to_string(),
         })
     }
     
@@ -142,77 +115,125 @@ impl ProjectInitializer {
 title: "{}"
 author: ["Your Name"]
 date: "{}"
-# Document subtitle
 # subtitle: "Document Subtitle"
 
 # Language and Localization
 lang: "en"
-# For specific babel language
 # babel-lang: "ngerman"
 
 # Document Structure
-# Use 'section' for articles, 'chapter' for books/reports
 top-level-division: "section"
 numbersections: true
-# Numbering depth (1-6)
 # secnumdepth: 3
-# Table of contents
 # toc: true
-# TOC depth
 # toc-depth: 3
-# List of figures
 # lof: true
-# List of tables
 # lot: true
 
 # Document Class and Layout
-# Options: article, book, report, scrartcl, scrbook, scrreprt
 # documentclass: "article"
 # classoption: ["11pt", "a4paper"]
 # geometry: ["margin=2.5cm"]
 # fontsize: "11pt"
+# linestretch: 1.2
+
+# Fonts (requires XeLaTeX)
 # mainfont: "Times New Roman"
-# Used for headings in Eisvogel template
 # sansfont: "Arial"
 # monofont: "Courier New"
+# mathfont: "Latin Modern Math"
+
+# Headers and Footers
+# header-left: "Document Title"
+# header-center: ""
+# header-right: "\\today"
+# footer-left: "Author Name"
+# footer-center: ""
+# footer-right: "\\thepage"
 
 # Bibliography and Citations
 # bibliography: "references.bib"
-# Citation style
 # csl: "ieee.csl"
 # link-citations: true
+# reference-section-title: "References"
 
-# PDF-specific Options
-# colorlinks: true
+# Code Highlighting
+# highlight-style: "github"
+# listings: true
+
+# Links and Cross-references
 # linkcolor: "blue"
 # urlcolor: "blue"
 # citecolor: "blue"
-# Use book class (enables chapters)
-# book: true
+
+# PDF-specific Options
+# colorlinks: true
+# bookmarks: true
+# bookmarksnumbered: true
+# pdfcreator: "AutoDoc"
+# pdfproducer: "Pandoc with XeLaTeX"
 
 # Eisvogel Template Options
 # titlepage: true
-# titlepage-color: "06386e"
-# titlepage-text-color: "FFFFFF"
-# titlepage-rule-color: "FFFFFF"
-# titlepage-rule-height: 1
-# titlepage-background: "background.pdf"
-# logo: "logo.png"
+# titlepage-color: "FFFFFF"
+# titlepage-text-color: "000000"
+# titlepage-rule-color: "000000"
+# titlepage-rule-height: 2
+# logo: "images/logo.png"
 # logo-width: "100"
-# footer-left: "Footer Text"
-# header-right: "Header Text"
 # disable-header-and-footer: false
-# listings-disable-line-numbers: false
-# code-block-font-size: "\footnotesize"
 
-# HTML Output Options
-# css: "style.css"
-# self-contained: true
+# Table Options
+# table-use-row-colors: true
+
+# Figure Options
+# fig-caption-location: "bottom"
+# tbl-caption-location: "top"
+
+# Custom Variables
+# company: "Your Company"
+# department: "Your Department"
+# version: "1.0"
+# status: "Draft"
 ---
+
+# Project Setup
+
+This document serves as the main configuration file for your AutoDoc project.
+All document settings are defined in the YAML frontmatter above.
+
+## Configuration Guide
+
+### Essential Settings
+- **title**: Document title (appears on title page)
+- **author**: List of authors (use array format)
+- **date**: Document date (use YYYY-MM-DD format)
+- **lang**: Document language (en, de, fr, es, etc.)
+
+### Layout Options
+- **geometry**: Page margins and layout
+- **fontsize**: Base font size (10pt, 11pt, 12pt)
+- **numbersections**: Enable section numbering
+- **toc**: Enable table of contents
+
+### Advanced Features
+- **bibliography**: Reference file for citations
+- **highlight-style**: Code syntax highlighting theme
+- **titlepage**: Enable custom title page (Eisvogel)
+
+## Next Steps
+
+1. Customize the frontmatter above for your document
+2. Add content in numbered markdown files
+3. Place images in the images/ directory
+4. Run autodoc build pdf to generate your document
+
+For more information, visit: https://github.com/metaneutrons/autodoc
 "#, self.project_name, current_date);
-        
+
         fs::write("00-setup.md", setup_content)?;
-        info!("Created 00-setup.md configuration file");
+        info!("Created comprehensive 00-setup.md configuration file");
+        
         Ok(())
     }
     
@@ -220,31 +241,38 @@ numbersections: true
         if !Path::new("01-introduction.md").exists() {
             let sample_content = format!(r#"# Introduction
 
-Welcome to your new {} document project!
+Welcome to your new AutoDoc project: **{}**!
 
-This is a sample introduction section. You can edit this file and add more numbered markdown files to build your document.
+This is a sample introduction file. You can edit this content or create additional numbered markdown files to build your document.
 
 ## Getting Started
 
-1. Edit the metadata in `00-setup.md`
-2. Add your content in numbered markdown files (01-intro.md, 02-chapter.md, etc.)
-3. Run `autodoc build pdf` to generate your document
+1. Edit the metadata in 00-setup.md
+2. Add your content in numbered markdown files
+3. Run autodoc build pdf to generate your document
 
 ## Features
 
-- **Professional PDF output** with LaTeX typesetting
-- **Multiple formats**: PDF, DOCX, HTML (coming soon)
-- **Mermaid diagrams** with native Rust rendering (coming soon)
-- **Bibliography support** with pandoc-citeproc
-- **Template system** with Eisvogel and custom templates
+AutoDoc provides:
+- Professional PDF generation with LaTeX
+- Multi-format output (PDF, DOCX, HTML)
+- Template management
+- Dependency validation
+- Multi-language support
 
-Happy writing!
+Happy writing! 📝
 "#, self.project_name);
-            
+
             fs::write("01-introduction.md", sample_content)?;
             info!("Created sample content file: 01-introduction.md");
         }
         
         Ok(())
     }
+}
+
+pub fn initialize_project(name: &str) -> Result<()> {
+    let rt = tokio::runtime::Runtime::new()?;
+    let initializer = ProjectInitializer::new(name.to_string());
+    rt.block_on(initializer.initialize())
 }
