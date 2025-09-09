@@ -1,0 +1,13 @@
+project:
+  name: document
+  output_dir: output
+  source_dir: null
+build:
+  default_format: pdf
+  watch: false
+  clean_before_build: false
+templates:
+  pdf_template: null
+  html_template: null
+  docx_template: null
+metadata: null

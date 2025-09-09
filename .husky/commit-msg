@@ -1,0 +1,32 @@
+#!/bin/sh
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Conventional commit regex with blueprint extension
+commit_regex='^(feat|fix|docs|style|refactor|test|chore|blueprint)(\(.+\))?: .{1,50}'
+
+if ! echo "$commit_msg" | grep -qE "$commit_regex"; then
+    echo "❌ Invalid commit message format!"
+    echo ""
+    echo "Expected format: type(scope): description"
+    echo ""
+    echo "Available types:"
+    echo "  feat:      New feature"
+    echo "  fix:       Bug fix"
+    echo "  docs:      Documentation changes"
+    echo "  style:     Code style changes (formatting, etc.)"
+    echo "  refactor:  Code refactoring"
+    echo "  test:      Adding or updating tests"
+    echo "  chore:     Maintenance tasks"
+    echo "  blueprint: Architecture/design changes"
+    echo ""
+    echo "Examples:"
+    echo "  feat(templates): add Eisvogel template support"
+    echo "  fix(build): resolve PDF generation issue"
+    echo "  blueprint: update Phase 4 implementation plan"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Commit message format valid"

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+echo "🔍 Pre-commit checks..."
+
+# Check if Rust compiles without errors
+echo "📦 Checking Rust compilation..."
+if ! cargo check --quiet; then
+    echo "❌ Rust compilation failed. Fix errors before committing."
+    exit 1
+fi
+
+echo "✅ Rust compilation successful"
+
+# Check conventional commit format
+commit_regex='^(feat|fix|docs|style|refactor|test|chore|blueprint)(\(.+\))?: .{1,50}'
+
+# Get the commit message from the commit-msg file or stdin
+if [ -f ".git/COMMIT_EDITMSG" ]; then
+    commit_msg=$(head -n1 .git/COMMIT_EDITMSG)
+else
+    # For interactive commits, we'll check this in commit-msg hook instead
+    echo "✅ Pre-commit checks passed"
+    exit 0
+fi
+
+if ! echo "$commit_msg" | grep -qE "$commit_regex"; then
+    echo "❌ Invalid commit message format!"
+    echo "Expected: type(scope): description"
+    echo "Types: feat, fix, docs, style, refactor, test, chore, blueprint"
+    echo "Example: feat(templates): add Eisvogel template support"
+    echo "Example: blueprint: update implementation plan"
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed"
