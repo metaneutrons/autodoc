@@ -4,256 +4,141 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: false
+        type: string
+      use_gitversion:
+        description: 'Use GitVersion for automatic versioning'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  create-release:
-    name: Create Release
+  version:
+    name: Determine Version
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     
-    - name: Generate Release Notes
-      id: release_notes
-      run: |
-        # Get previous tag
-        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-        
-        # Generate changelog
-        if [ -n "$PREV_TAG" ]; then
-          echo "## 🚀 What's Changed" > release_notes.md
-          echo "" >> release_notes.md
-          
-          # Group commits by type
-          git log --pretty=format:"%s" $PREV_TAG..HEAD | grep -E "^(feat|fix|docs|style|refactor|test|chore|blueprint)" | while read line; do
-            case "$line" in
-              feat*) echo "### ✨ Features" >> features.tmp; echo "- $line" | sed 's/^feat[^:]*: /- /' >> features.tmp ;;
-              fix*) echo "### 🐛 Bug Fixes" >> fixes.tmp; echo "- $line" | sed 's/^fix[^:]*: /- /' >> fixes.tmp ;;
-              docs*) echo "### 📚 Documentation" >> docs.tmp; echo "- $line" | sed 's/^docs[^:]*: /- /' >> docs.tmp ;;
-              blueprint*) echo "### 🏗️ Architecture" >> blueprint.tmp; echo "- $line" | sed 's/^blueprint[^:]*: /- /' >> blueprint.tmp ;;
-              *) echo "### 🔧 Other Changes" >> other.tmp; echo "- $line" >> other.tmp ;;
-            esac
-          done
-          
-          # Combine sections
-          for file in features.tmp fixes.tmp docs.tmp blueprint.tmp other.tmp; do
-            if [ -f "$file" ]; then
-              cat "$file" >> release_notes.md
-              echo "" >> release_notes.md
-              rm "$file"
-            fi
-          done
-        else
-          echo "## 🎉 Initial Release" > release_notes.md
-          echo "" >> release_notes.md
-          echo "First release of AutoDoc - Enterprise-grade document generation tool!" >> release_notes.md
-        fi
-        
-        # Add download section
-        echo "## 📥 Downloads" >> release_notes.md
-        echo "" >> release_notes.md
-        echo "| Platform | Architecture | Download |" >> release_notes.md
-        echo "|----------|--------------|----------|" >> release_notes.md
-        echo "| Linux | x86_64 | [autodoc-linux-x86_64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-linux-x86_64.tar.gz) |" >> release_notes.md
-        echo "| Linux | ARM64 | [autodoc-linux-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-linux-arm64.tar.gz) |" >> release_notes.md
-        echo "| Windows | x86_64 | [autodoc-windows-x86_64.zip](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-windows-x86_64.zip) |" >> release_notes.md
-        echo "| Windows | ARM64 | [autodoc-windows-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-windows-arm64.zip) |" >> release_notes.md
-        echo "| macOS | Intel | [autodoc-macos-x86_64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-x86_64.tar.gz) |" >> release_notes.md
-        echo "| macOS | Apple Silicon | [autodoc-macos-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-arm64.tar.gz) |" >> release_notes.md
-    
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install GitVersion
+      if: inputs.use_gitversion == true
+      uses: gittools/actions/gitversion/setup@v0.10.2
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: AutoDoc ${{ github.ref_name }}
-        body_path: release_notes.md
-        draft: false
-        prerelease: false
+        versionSpec: '5.x'
+    
+    - name: Determine Version with GitVersion
+      if: inputs.use_gitversion == true
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.10.2
+    
+    - name: Set Version
+      id: version
+      run: |
+        if [ "${{ inputs.use_gitversion }}" == "true" ]; then
+          VERSION="${{ steps.gitversion.outputs.semVer }}"
+          TAG="v$VERSION"
+        elif [ -n "${{ inputs.version }}" ]; then
+          TAG="${{ inputs.version }}"
+          VERSION="${TAG#v}"
+        else
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        echo "Tag: $TAG"
 
   build:
     name: Build
-    needs: create-release
+    needs: version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          # Linux
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact_name: autodoc
-            asset_name: autodoc-linux-x86_64
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            artifact_name: autodoc
-            asset_name: autodoc-linux-arm64
-          
-          # Windows
+            artifact: autodoc-linux-x64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: autodoc.exe
-            asset_name: autodoc-windows-x86_64.exe
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            artifact_name: autodoc.exe
-            asset_name: autodoc-windows-arm64.exe
-          
-          # macOS
+            artifact: autodoc-windows-x64.exe
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact_name: autodoc
-            asset_name: autodoc-macos-x86_64
+            artifact: autodoc-macos-x64
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact_name: autodoc
-            asset_name: autodoc-macos-arm64
-
+            artifact: autodoc-macos-arm64
+    
     steps:
     - uses: actions/checkout@v4
     
-    - uses: dtolnay/rust-toolchain@stable
+    - name: Install system dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libfontconfig1-dev
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
       with:
         targets: ${{ matrix.target }}
     
-    - uses: Swatinem/rust-cache@v2
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
       with:
         key: ${{ matrix.target }}
     
-    - name: Install cross-compilation tools
-      if: matrix.target == 'aarch64-unknown-linux-gnu'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu
-    
-    - name: Build release
+    - name: Build
       run: cargo build --release --target ${{ matrix.target }}
-      env:
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     
-    - name: Create archive
+    - name: Prepare artifact
       shell: bash
       run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          # Windows: Create zip archive
-          cd target/${{ matrix.target }}/release
-          7z a ../../../${{ matrix.asset_name }}.zip autodoc.exe
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          cp target/${{ matrix.target }}/release/autodoc.exe ${{ matrix.artifact }}
         else
-          # Unix: Create tar.gz archive
-          cd target/${{ matrix.target }}/release
-          tar czf ../../../${{ matrix.asset_name }}.tar.gz autodoc
+          cp target/${{ matrix.target }}/release/autodoc ${{ matrix.artifact }}
         fi
     
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ${{ matrix.asset_name }}${{ matrix.os == 'windows-latest' && '.zip' || '.tar.gz' }}
-        asset_name: ${{ matrix.asset_name }}${{ matrix.os == 'windows-latest' && '.zip' || '.tar.gz' }}
-        asset_content_type: application/octet-stream
-
-  update-homebrew:
-    needs: [create-release, build]
-    if: always() && needs.create-release.result == 'success' && needs.build.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: false
-    steps:
-    - name: Download macOS assets
-      run: |
-        # Download macOS x64 asset
-        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -o autodoc-macos-x86_64.tar.gz \
-          "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-x86_64.tar.gz"
-        
-        # Download macOS ARM64 asset
-        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -o autodoc-macos-arm64.tar.gz \
-          "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-arm64.tar.gz"
-    
-    - name: Calculate checksums
-      id: checksums
-      run: |
-        MACOS_X64_SHA=$(sha256sum autodoc-macos-x86_64.tar.gz | cut -d' ' -f1)
-        MACOS_ARM64_SHA=$(sha256sum autodoc-macos-arm64.tar.gz | cut -d' ' -f1)
-        echo "macos_x64_sha=${MACOS_X64_SHA}" >> $GITHUB_OUTPUT
-        echo "macos_arm64_sha=${MACOS_ARM64_SHA}" >> $GITHUB_OUTPUT
-        echo "macOS x64 SHA256: ${MACOS_X64_SHA}"
-        echo "macOS ARM64 SHA256: ${MACOS_ARM64_SHA}"
-    
-    - name: Update Homebrew formula (if token available)
-      if: env.HOMEBREW_UPDATE_TOKEN != ''
-      uses: peter-evans/repository-dispatch@v3.0.0
-      with:
-        token: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
-        repository: metaneutrons/homebrew-tap
-        event-type: update-formula
-        client-payload: |
-          {
-            "formula": "autodoc",
-            "version": "${{ github.ref_name }}",
-            "macos_x64_sha": "${{ steps.checksums.outputs.macos_x64_sha }}",
-            "macos_arm64_sha": "${{ steps.checksums.outputs.macos_arm64_sha }}"
-          }
-      env:
-        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
-    
-    - name: Create Homebrew update instructions (fallback)
-      if: env.HOMEBREW_UPDATE_TOKEN == ''
-      env:
-        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
-      run: |
-        cat << EOF > homebrew-update.md
-        ## 🍺 Homebrew Formula Update Required
-        
-        **Version**: ${{ github.ref_name }}
-        **macOS x64 SHA256**: \`${{ steps.checksums.outputs.macos_x64_sha }}\`
-        **macOS ARM64 SHA256**: \`${{ steps.checksums.outputs.macos_arm64_sha }}\`
-        
-        ### Manual Update Steps:
-        
-        1. Go to [homebrew-tap repository](https://github.com/metaneutrons/homebrew-tap)
-        2. Edit \`autodoc.rb\`
-        3. Update version to: \`${{ github.ref_name }}\`
-        4. Update SHA256 checksums for both architectures
-        
-        ### Or use GitHub CLI:
-        
-        \`\`\`bash
-        gh workflow run update-formula.yml \\
-          --repo metaneutrons/homebrew-tap \\
-          --field formula=autodoc \\
-          --field version=${{ github.ref_name }} \\
-          --field macos_x64_sha=${{ steps.checksums.outputs.macos_x64_sha }} \\
-          --field macos_arm64_sha=${{ steps.checksums.outputs.macos_arm64_sha }}
-        \`\`\`
-        EOF
-    
-    - name: Upload Homebrew update instructions
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: homebrew-update-instructions
-        path: homebrew-update.md
-        retention-days: 30
+        name: ${{ matrix.artifact }}
+        path: ${{ matrix.artifact }}
+
+  release:
+    name: Create Release
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
     
-    - name: Display update information
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.version.outputs.tag }}
+        name: AutoDoc ${{ needs.version.outputs.version }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          autodoc-linux-x64/autodoc-linux-x64
+          autodoc-windows-x64.exe/autodoc-windows-x64.exe
+          autodoc-macos-x64/autodoc-macos-x64
+          autodoc-macos-arm64/autodoc-macos-arm64
       env:
-        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
-      run: |
-        echo "## 🍺 Homebrew Update Information" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**macOS x64 SHA256**: \`${{ steps.checksums.outputs.macos_x64_sha }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "**macOS ARM64 SHA256**: \`${{ steps.checksums.outputs.macos_arm64_sha }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        if [[ -n "$HOMEBREW_UPDATE_TOKEN" ]]; then
-          echo "✅ Homebrew formula updated automatically via repository dispatch." >> $GITHUB_STEP_SUMMARY
-        else
-          echo "ℹ️ Homebrew formula needs to be updated manually. Check the homebrew-update-instructions artifact." >> $GITHUB_STEP_SUMMARY
-        fi
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
