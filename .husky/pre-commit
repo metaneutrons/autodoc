@@ -12,8 +12,24 @@ if [ -z "$code_files" ]; then
     exit 0
 fi
 
-# Check if Rust compiles without errors
 echo "📦 Checking Rust compilation..."
+
+# Auto-format Rust code and check if changes were made
+echo "🎨 Auto-formatting Rust code..."
+if ! cargo fmt --all; then
+    echo "❌ Cargo fmt failed"
+    exit 1
+fi
+
+# Check if formatting made changes and add them
+if ! git diff --quiet; then
+    echo "📝 Formatting changes applied, adding to commit..."
+    git add -u
+else
+    echo "✅ Code already properly formatted"
+fi
+
+# Check if Rust compiles without errors
 if ! cargo check --quiet; then
     echo "❌ Rust compilation failed. Fix errors before committing."
     exit 1
