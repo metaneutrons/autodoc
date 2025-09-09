@@ -122,7 +122,27 @@ impl AutoDocConfig {
 mod tests {
     use super::*;
     use std::fs;
+    use std::path::PathBuf;
     use tempfile::TempDir;
+
+    // Helper to ensure directory is restored even if test panics
+    struct DirectoryGuard {
+        original: PathBuf,
+    }
+
+    impl DirectoryGuard {
+        fn new(new_dir: &Path) -> std::io::Result<Self> {
+            let original = std::env::current_dir()?;
+            std::env::set_current_dir(new_dir)?;
+            Ok(Self { original })
+        }
+    }
+
+    impl Drop for DirectoryGuard {
+        fn drop(&mut self) {
+            let _ = std::env::set_current_dir(&self.original);
+        }
+    }
 
     #[test]
     fn test_autodoc_config_default() {
@@ -190,14 +210,10 @@ mod tests {
     #[test]
     fn test_find_config_file_none() {
         let temp_dir = TempDir::new().unwrap();
-        let original_dir = std::env::current_dir().unwrap();
-
-        std::env::set_current_dir(temp_dir.path()).unwrap();
+        let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
 
         let result = AutoDocConfig::find_config_file();
         assert!(result.is_none());
-
-        std::env::set_current_dir(original_dir).unwrap();
     }
 
     #[test]
@@ -206,14 +222,11 @@ mod tests {
         let config_path = temp_dir.path().join("autodoc.yml");
         fs::write(&config_path, "project:\n  name: test").unwrap();
 
-        let original_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(temp_dir.path()).unwrap();
+        let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
 
         let result = AutoDocConfig::find_config_file();
         assert!(result.is_some());
         assert_eq!(result.unwrap(), PathBuf::from("autodoc.yml"));
-
-        std::env::set_current_dir(original_dir).unwrap();
     }
 
     #[test]

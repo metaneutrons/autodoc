@@ -336,7 +336,27 @@ impl MetadataParser {
 mod tests {
     use super::*;
     use std::fs;
+    use std::path::PathBuf;
     use tempfile::TempDir;
+
+    // Helper to ensure directory is restored even if test panics
+    struct DirectoryGuard {
+        original: PathBuf,
+    }
+
+    impl DirectoryGuard {
+        fn new(new_dir: &Path) -> std::io::Result<Self> {
+            let original = std::env::current_dir()?;
+            std::env::set_current_dir(new_dir)?;
+            Ok(Self { original })
+        }
+    }
+
+    impl Drop for DirectoryGuard {
+        fn drop(&mut self) {
+            let _ = std::env::set_current_dir(&self.original);
+        }
+    }
 
     #[tokio::test]
     async fn test_file_discovery_empty_dir() {
@@ -349,15 +369,9 @@ mod tests {
             images_dir: temp_dir.path().join("images"),
         };
 
-        // Change to temp directory for discovery
-        let original_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(temp_dir.path()).unwrap();
-
+        let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
         let discovery = FileDiscovery::new(config);
         let result = discovery.discover_all();
-
-        // Restore original directory immediately
-        std::env::set_current_dir(&original_dir).unwrap();
 
         assert!(result.is_ok());
         let files = result.unwrap();
@@ -380,14 +394,10 @@ mod tests {
         };
 
         // Change to temp directory for discovery
-        let original_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(temp_dir.path()).unwrap();
+        let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
 
         let discovery = FileDiscovery::new(config);
         let result = discovery.discover_all();
-
-        // Restore original directory immediately
-        std::env::set_current_dir(&original_dir).unwrap();
 
         assert!(result.is_ok());
         let files = result.unwrap();
@@ -409,13 +419,10 @@ mod tests {
             images_dir: temp_dir.path().join("images"),
         };
 
-        let original_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(temp_dir.path()).unwrap();
+        let _guard = DirectoryGuard::new(temp_dir.path()).unwrap();
 
         let discovery = FileDiscovery::new(config);
         let result = discovery.discover_all();
-
-        std::env::set_current_dir(&original_dir).unwrap();
 
         assert!(result.is_ok());
         let files = result.unwrap();

@@ -192,7 +192,7 @@ fn test_unicode_content() {
     // Create markdown file with Unicode content
     let unicode_content = r#"---
 title: "测试文档 🚀"
-author: "Тест Автор"
+author: ["Тест Автор"]
 ---
 
 # Заголовок
