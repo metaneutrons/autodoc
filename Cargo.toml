@@ -2,7 +2,7 @@
 name = "autodoc"
 version = "0.1.0"
 edition = "2021"
-description = "Enterprise-grade document generation with Pandoc"
+description = "Autoamtic Document generation with Pandoc"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/your-username/autodoc"
 authors = ["Your Name <your.email@example.com>"]

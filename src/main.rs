@@ -25,7 +25,7 @@ const VERSION: &str = concat!(
 
 #[derive(Parser)]
 #[command(name = "autodoc")]
-#[command(about = "Enterprise-grade document generation with Pandoc")]
+#[command(about = "Automatic document generation with Pandoc")]
 #[command(version = VERSION)]
 struct Cli {
     #[command(subcommand)]

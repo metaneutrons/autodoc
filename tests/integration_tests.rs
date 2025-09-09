@@ -10,7 +10,7 @@ fn test_cli_help() {
     
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("Enterprise-grade document generation"));
+        .stdout(predicate::str::contains("Automatic document generation"));
 }
 
 #[test]
