@@ -349,8 +349,15 @@ mod tests {
             images_dir: temp_dir.path().join("images"),
         };
 
+        // Change to temp directory for discovery
+        let original_dir = std::env::current_dir().unwrap();
+        std::env::set_current_dir(temp_dir.path()).unwrap();
+
         let discovery = FileDiscovery::new(config);
         let result = discovery.discover_all();
+
+        // Restore original directory immediately
+        std::env::set_current_dir(&original_dir).unwrap();
 
         assert!(result.is_ok());
         let files = result.unwrap();
@@ -379,8 +386,8 @@ mod tests {
         let discovery = FileDiscovery::new(config);
         let result = discovery.discover_all();
 
-        // Restore original directory
-        std::env::set_current_dir(original_dir).unwrap();
+        // Restore original directory immediately
+        std::env::set_current_dir(&original_dir).unwrap();
 
         assert!(result.is_ok());
         let files = result.unwrap();
@@ -408,7 +415,7 @@ mod tests {
         let discovery = FileDiscovery::new(config);
         let result = discovery.discover_all();
 
-        std::env::set_current_dir(original_dir).unwrap();
+        std::env::set_current_dir(&original_dir).unwrap();
 
         assert!(result.is_ok());
         let files = result.unwrap();
@@ -433,7 +440,7 @@ mod tests {
 
         let content = r#"---
 title: "Test Document"
-author: "Test Author"
+author: ["Test Author"]
 date: "2024-01-01"
 ---
 
@@ -441,15 +448,8 @@ date: "2024-01-01"
 
         fs::write(&file_path, content).unwrap();
 
-        let markdown_file = MarkdownFile {
-            path: file_path,
-            content: content.to_string(),
-            has_inline_mermaid: false,
-            dependencies: vec![],
-            last_modified: std::time::SystemTime::now(),
-            metadata: DocumentMetadata::default(),
-        };
-
+        // Use the proper parsing method
+        let markdown_file = MetadataParser::parse_file(&file_path).unwrap();
         let files = vec![markdown_file];
         let metadata = MetadataParser::merge_metadata(&files);
 

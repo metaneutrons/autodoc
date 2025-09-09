@@ -198,7 +198,7 @@ fn test_full_project_lifecycle() {
         temp_dir.path().join("custom.md"),
         r#"---
 title: "Custom Document"
-author: "Test Author"
+author: ["Test Author"]
 ---
 
 # Custom Content

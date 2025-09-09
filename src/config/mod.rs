@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::SystemTime;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentMetadata {
     // Standard Pandoc metadata
     pub title: Option<String>,
@@ -48,6 +48,42 @@ pub struct DocumentMetadata {
     // Custom metadata (extensible)
     #[serde(flatten)]
     pub custom: HashMap<String, serde_yaml::Value>,
+}
+
+impl Default for DocumentMetadata {
+    fn default() -> Self {
+        Self {
+            title: None,
+            author: None,
+            date: None,
+            subtitle: None,
+            lang: None,
+            babel_lang: None,
+            top_level_division: None,
+            numbersections: Some(true),
+            secnumdepth: None,
+            toc: None,
+            toc_depth: None,
+            lof: None,
+            lot: None,
+            documentclass: None,
+            classoption: None,
+            geometry: None,
+            fontsize: None,
+            mainfont: None,
+            sansfont: None,
+            monofont: None,
+            bibliography: None,
+            csl: None,
+            link_citations: None,
+            colorlinks: None,
+            linkcolor: None,
+            urlcolor: None,
+            citecolor: None,
+            book: None,
+            custom: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
