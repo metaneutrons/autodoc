@@ -6,8 +6,79 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    name: Release
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        # Get previous tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        # Generate changelog
+        if [ -n "$PREV_TAG" ]; then
+          echo "## 🚀 What's Changed" > release_notes.md
+          echo "" >> release_notes.md
+          
+          # Group commits by type
+          git log --pretty=format:"%s" $PREV_TAG..HEAD | grep -E "^(feat|fix|docs|style|refactor|test|chore|blueprint)" | while read line; do
+            case "$line" in
+              feat*) echo "### ✨ Features" >> features.tmp; echo "- $line" | sed 's/^feat[^:]*: /- /' >> features.tmp ;;
+              fix*) echo "### 🐛 Bug Fixes" >> fixes.tmp; echo "- $line" | sed 's/^fix[^:]*: /- /' >> fixes.tmp ;;
+              docs*) echo "### 📚 Documentation" >> docs.tmp; echo "- $line" | sed 's/^docs[^:]*: /- /' >> docs.tmp ;;
+              blueprint*) echo "### 🏗️ Architecture" >> blueprint.tmp; echo "- $line" | sed 's/^blueprint[^:]*: /- /' >> blueprint.tmp ;;
+              *) echo "### 🔧 Other Changes" >> other.tmp; echo "- $line" >> other.tmp ;;
+            esac
+          done
+          
+          # Combine sections
+          for file in features.tmp fixes.tmp docs.tmp blueprint.tmp other.tmp; do
+            if [ -f "$file" ]; then
+              cat "$file" >> release_notes.md
+              echo "" >> release_notes.md
+              rm "$file"
+            fi
+          done
+        else
+          echo "## 🎉 Initial Release" > release_notes.md
+          echo "" >> release_notes.md
+          echo "First release of AutoDoc - Enterprise-grade document generation tool!" >> release_notes.md
+        fi
+        
+        # Add download section
+        echo "## 📥 Downloads" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "| Platform | Architecture | Download |" >> release_notes.md
+        echo "|----------|--------------|----------|" >> release_notes.md
+        echo "| Linux | x86_64 | [autodoc-linux-x86_64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-linux-x86_64) |" >> release_notes.md
+        echo "| Linux | ARM64 | [autodoc-linux-arm64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-linux-arm64) |" >> release_notes.md
+        echo "| Windows | x86_64 | [autodoc-windows-x86_64.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-windows-x86_64.exe) |" >> release_notes.md
+        echo "| Windows | ARM64 | [autodoc-windows-arm64.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-windows-arm64.exe) |" >> release_notes.md
+        echo "| macOS | Intel | [autodoc-macos-x86_64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-x86_64) |" >> release_notes.md
+        echo "| macOS | Apple Silicon | [autodoc-macos-arm64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-arm64) |" >> release_notes.md
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: AutoDoc ${{ github.ref_name }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+
+  build:
+    name: Build
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -64,11 +135,12 @@ jobs:
       env:
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
         asset_name: ${{ matrix.asset_name }}
-        tag: ${{ github.ref }}
-        overwrite: true
+        asset_content_type: application/octet-stream
