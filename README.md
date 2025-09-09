@@ -201,7 +201,8 @@ Made with ❤️ and 🦀 by [metaneutrons](https://github.com/metaneutrons)
 ### Pre-commit Hook
 AutoDoc includes an automatic formatting pre-commit hook:
 - **Auto-formats** Rust code with `cargo fmt`
-- **Prevents CI failures** by fixing formatting locally
+- **Runs Clippy linter** with `-D warnings` (treats warnings as errors)
+- **Prevents CI failures** by fixing issues locally
 - **Validates** commit message format
 
 The hook is automatically installed in `.git/hooks/pre-commit`.
