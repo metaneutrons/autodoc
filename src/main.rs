@@ -383,26 +383,11 @@ async fn main() -> Result<()> {
                 return Ok(());
             }
             
-            let diagrams_dir = config.output_dir.join("diagrams");
-            let processor = diagrams::DiagramProcessor::new(diagrams_dir);
+            let processor = diagrams::DiagramProcessor::new(config.clone());
             
             println!("🎨 Processing {} Mermaid diagrams...", files.mermaid_files.len());
             
-            for mermaid_file in &files.mermaid_files {
-                let content = fs::read_to_string(mermaid_file)?;
-                let name = mermaid_file.file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("diagram");
-                
-                match processor.process_mermaid(&content, name).await {
-                    Ok(output_path) => {
-                        println!("  ✅ {}: {}", name, output_path.display());
-                    }
-                    Err(e) => {
-                        error!("Failed to process {}: {}", name, e);
-                    }
-                }
-            }
+            processor.process_all(&files.mermaid_files).await?;
             
             println!("🎨 Diagram processing complete!");
         }

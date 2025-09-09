@@ -14,7 +14,7 @@ AutoDoc is a powerful Rust-based CLI tool that orchestrates Pandoc and XeLaTeX t
 
 - 🎯 **Multi-Format Output** - PDF, DOCX, HTML with format-specific optimizations
 - 🎨 **Professional Templates** - Eisvogel LaTeX template with auto-download
-- 📊 **Native Diagrams** - Mermaid diagram processing with CLI integration
+- 📊 **Native Diagrams** - Built-in Mermaid rendering with mermaid-rs (no Node.js required)
 - ⚙️ **Smart Configuration** - YAML-based project configuration with auto-discovery
 - 🌍 **Multi-Language** - Babel language auto-detection for LaTeX
 - 🔍 **Dependency Management** - Smart validation with installation hints
@@ -107,10 +107,7 @@ AutoDoc follows a **smart orchestration** approach:
 **Optional (for PDF):**
 - [XeLaTeX](https://tug.org/xetex/) - LaTeX engine for PDF generation
 
-**Optional (for Diagrams):**
-- [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) - Diagram rendering
-
-AutoDoc provides installation hints for missing dependencies.
+AutoDoc provides installation hints for missing dependencies and includes **native Mermaid diagram rendering** built-in.
 
 ## 📊 Commands
 

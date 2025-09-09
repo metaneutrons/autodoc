@@ -1,97 +1,108 @@
+use crate::config::ProjectConfig;
 use crate::errors::{AutoDocError, Result};
-use std::path::{Path, PathBuf};
+use mermaid_rs::Mermaid;
 use std::fs;
-use tracing::{info, debug};
-use std::process::Command;
+use std::path::{Path, PathBuf};
+use tracing::{info, debug, warn};
 
 pub struct DiagramProcessor {
-    output_dir: PathBuf,
+    config: ProjectConfig,
+    mermaid: Option<Mermaid>,
 }
 
 impl DiagramProcessor {
-    pub fn new(output_dir: PathBuf) -> Self {
-        Self { output_dir }
-    }
-    
-    pub async fn process_mermaid(&self, mermaid_code: &str, output_name: &str) -> Result<PathBuf> {
-        info!("Processing Mermaid diagram: {}", output_name);
-        
-        self.ensure_output_dir()?;
-        
-        // Try native rendering first, fallback to file save
-        match self.render_with_mermaid_cli(mermaid_code, output_name).await {
-            Ok(path) => Ok(path),
-            Err(_) => {
-                debug!("Mermaid CLI not available, saving source code");
-                let mermaid_path = self.output_dir.join(format!("{}.mmd", output_name));
-                fs::write(&mermaid_path, mermaid_code)?;
-                info!("💾 Mermaid source saved: {}", mermaid_path.display());
-                Ok(mermaid_path)
+    pub fn new(config: ProjectConfig) -> Self {
+        let mermaid = match Mermaid::new() {
+            Ok(m) => {
+                info!("✅ Native Mermaid renderer initialized");
+                Some(m)
             }
-        }
+            Err(e) => {
+                warn!("Failed to initialize native Mermaid renderer: {}", e);
+                warn!("Diagram processing will be skipped");
+                None
+            }
+        };
+
+        Self { config, mermaid }
     }
-    
-    async fn render_with_mermaid_cli(&self, mermaid_code: &str, output_name: &str) -> Result<PathBuf> {
-        // Save mermaid source
-        let input_path = self.output_dir.join(format!("{}.mmd", output_name));
-        fs::write(&input_path, mermaid_code)?;
-        
-        // Try to render with mermaid CLI
-        let svg_path = self.output_dir.join(format!("{}.svg", output_name));
-        
-        let output = Command::new("mmdc")
-            .args(&[
-                "-i", input_path.to_str().unwrap(),
-                "-o", svg_path.to_str().unwrap(),
-                "-t", "neutral",
-                "-b", "white"
-            ])
-            .output()
-            .map_err(|e| AutoDocError::Build { 
-                message: format!("Mermaid CLI not found: {}", e) 
-            })?;
-        
-        if !output.status.success() {
-            return Err(AutoDocError::Build { 
-                message: "Mermaid rendering failed".to_string() 
+
+    pub async fn process_all(&self, mermaid_files: &[PathBuf]) -> Result<()> {
+        if self.mermaid.is_none() {
+            return Err(AutoDocError::Build {
+                message: "Native Mermaid renderer not available".to_string(),
             });
         }
-        
-        info!("🎨 Mermaid diagram rendered: {}", svg_path.display());
-        
-        // Convert to PDF for LaTeX compatibility
-        let pdf_path = self.output_dir.join(format!("{}.pdf", output_name));
-        self.svg_to_pdf_with_inkscape(&svg_path, &pdf_path)?;
-        
-        Ok(pdf_path)
-    }
-    
-    fn svg_to_pdf_with_inkscape(&self, svg_path: &Path, pdf_path: &Path) -> Result<()> {
-        let output = Command::new("inkscape")
-            .args(&[
-                svg_path.to_str().unwrap(),
-                "--export-type=pdf",
-                &format!("--export-filename={}", pdf_path.to_str().unwrap())
-            ])
-            .output();
-        
-        match output {
-            Ok(result) if result.status.success() => {
-                debug!("📄 SVG converted to PDF: {}", pdf_path.display());
-                Ok(())
-            }
-            _ => {
-                debug!("Inkscape not available, keeping SVG");
-                Ok(())
-            }
+
+        let mermaid = self.mermaid.as_ref().unwrap();
+        let output_dir = self.config.output_dir.join("diagrams");
+        fs::create_dir_all(&output_dir)?;
+
+        for file_path in mermaid_files {
+            self.process_file(mermaid, file_path, &output_dir).await?;
         }
-    }
-    
-    pub fn ensure_output_dir(&self) -> Result<()> {
-        if !self.output_dir.exists() {
-            fs::create_dir_all(&self.output_dir)?;
-            info!("Created diagrams directory: {}", self.output_dir.display());
-        }
+
         Ok(())
+    }
+
+    async fn process_file(&self, mermaid: &Mermaid, file_path: &Path, output_dir: &Path) -> Result<()> {
+        info!("Processing diagram: {}", file_path.display());
+
+        let content = fs::read_to_string(file_path)?;
+        let file_stem = file_path.file_stem()
+            .and_then(|s| s.to_str())
+            .ok_or_else(|| AutoDocError::Build {
+                message: format!("Invalid filename: {}", file_path.display()),
+            })?;
+
+        // Render to SVG using native mermaid-rs
+        let svg_content = mermaid.render(&content)
+            .map_err(|e| AutoDocError::Build {
+                message: format!("Failed to render Mermaid diagram: {}", e),
+            })?;
+
+        // Save SVG
+        let svg_path = output_dir.join(format!("{}.svg", file_stem));
+        fs::write(&svg_path, &svg_content)?;
+        debug!("Generated SVG: {}", svg_path.display());
+
+        Ok(())
+    }
+
+    pub fn process_inline_mermaid(&self, content: &str) -> Result<String> {
+        if self.mermaid.is_none() {
+            return Ok(content.to_string());
+        }
+
+        let mermaid = self.mermaid.as_ref().unwrap();
+        let mut processed_content = content.to_string();
+
+        // Find and replace ```mermaid blocks
+        let mermaid_regex = regex::Regex::new(r"```mermaid\n(.*?)\n```")
+            .map_err(|e| AutoDocError::Build { message: format!("Regex error: {}", e) })?;
+
+        for (i, captures) in mermaid_regex.captures_iter(content).enumerate() {
+            if let Some(diagram_code) = captures.get(1) {
+                match mermaid.render(diagram_code.as_str()) {
+                    Ok(svg) => {
+                        // Create inline SVG or save to file and reference
+                        let diagram_filename = format!("inline-diagram-{}.svg", i);
+                        let diagram_path = self.config.output_dir.join("diagrams").join(&diagram_filename);
+                        
+                        if let Ok(_) = fs::create_dir_all(diagram_path.parent().unwrap()) {
+                            if let Ok(_) = fs::write(&diagram_path, &svg) {
+                                let replacement = format!("![Diagram]({})", diagram_path.display());
+                                processed_content = processed_content.replace(&captures[0], &replacement);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Failed to render inline Mermaid diagram: {}", e);
+                    }
+                }
+            }
+        }
+
+        Ok(processed_content)
     }
 }

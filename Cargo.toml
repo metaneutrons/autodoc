@@ -28,6 +28,7 @@ chrono = { version = "0.4", features = ["serde"] }
 pisnge = "0.2.5"
 svg2pdf = "0.13.0"
 notify = "6.0"
+mermaid-rs = "0.1.1"
 
 [dev-dependencies]
 tokio-test = "0.4"
