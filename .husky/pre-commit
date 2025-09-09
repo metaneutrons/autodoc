@@ -35,5 +35,12 @@ if ! cargo check --quiet; then
     exit 1
 fi
 
+# Run Clippy linting
+echo "🔍 Running Clippy linter..."
+if ! cargo clippy -- -D warnings; then
+    echo "❌ Clippy found issues. Fix them before committing."
+    exit 1
+fi
+
 echo "✅ Rust compilation successful"
 echo "✅ Pre-commit checks passed"
