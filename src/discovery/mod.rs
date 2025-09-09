@@ -244,6 +244,43 @@ impl MetadataParser {
         
         merged
     }
+
+    /// Extract project configuration from Markdown files (replaces autodoc.yml)
+    pub fn extract_project_config(markdown_files: &[MarkdownFile]) -> ProjectConfig {
+        let mut config = ProjectConfig::default();
+        
+        // Look for configuration in 00-setup.md or first file
+        for file in markdown_files {
+            if file.path.file_name().and_then(|n| n.to_str()) == Some("00-setup.md") 
+                || file.path.file_name().and_then(|n| n.to_str()).unwrap_or("").starts_with("00-") {
+                
+                // Extract project config from frontmatter
+                if let Some(title) = &file.metadata.title {
+                    config.name = title.clone();
+                }
+                
+                // Check for custom output directory in frontmatter or content
+                if let Some(output_dir) = file.content.lines()
+                    .find(|line| line.starts_with("output_dir:"))
+                    .and_then(|line| line.split(':').nth(1))
+                    .map(|s| s.trim().trim_matches('"')) {
+                    config.output_dir = PathBuf::from(output_dir);
+                }
+                
+                // Check for templates directory
+                if let Some(templates_dir) = file.content.lines()
+                    .find(|line| line.starts_with("templates_dir:"))
+                    .and_then(|line| line.split(':').nth(1))
+                    .map(|s| s.trim().trim_matches('"')) {
+                    config.templates_dir = PathBuf::from(templates_dir);
+                }
+                
+                break;
+            }
+        }
+        
+        config
+    }
     
     fn merge_missing(target: &mut DocumentMetadata, source: &DocumentMetadata) {
         if target.title.is_none() { target.title = source.title.clone(); }
