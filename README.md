@@ -195,3 +195,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Made with ❤️ and 🦀 by [metaneutrons](https://github.com/metaneutrons)
 
 </div>
+
+## 🛠️ Development
+
+### Pre-commit Hook
+AutoDoc includes an automatic formatting pre-commit hook:
+- **Auto-formats** Rust code with `cargo fmt`
+- **Prevents CI failures** by fixing formatting locally
+- **Validates** commit message format
+
+The hook is automatically installed in `.git/hooks/pre-commit`.
