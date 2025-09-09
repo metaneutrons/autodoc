@@ -1,5 +1,5 @@
 [package]
-name = "autodoc"
+name = "autodoc-rs"
 version = "0.1.0"
 edition = "2021"
 description = "Automatic document generation with Pandoc - convert Markdown to PDF, DOCX, HTML with Mermaid diagrams"
