@@ -157,3 +157,103 @@ jobs:
         asset_path: ${{ matrix.asset_name }}${{ matrix.os == 'windows-latest' && '.zip' || '.tar.gz' }}
         asset_name: ${{ matrix.asset_name }}${{ matrix.os == 'windows-latest' && '.zip' || '.tar.gz' }}
         asset_content_type: application/octet-stream
+
+  update-homebrew:
+    needs: [create-release, build]
+    if: always() && needs.create-release.result == 'success' && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: false
+    steps:
+    - name: Download macOS assets
+      run: |
+        # Download macOS x64 asset
+        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -o autodoc-macos-x86_64.tar.gz \
+          "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-x86_64.tar.gz"
+        
+        # Download macOS ARM64 asset
+        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -o autodoc-macos-arm64.tar.gz \
+          "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/autodoc-macos-arm64.tar.gz"
+    
+    - name: Calculate checksums
+      id: checksums
+      run: |
+        MACOS_X64_SHA=$(sha256sum autodoc-macos-x86_64.tar.gz | cut -d' ' -f1)
+        MACOS_ARM64_SHA=$(sha256sum autodoc-macos-arm64.tar.gz | cut -d' ' -f1)
+        echo "macos_x64_sha=${MACOS_X64_SHA}" >> $GITHUB_OUTPUT
+        echo "macos_arm64_sha=${MACOS_ARM64_SHA}" >> $GITHUB_OUTPUT
+        echo "macOS x64 SHA256: ${MACOS_X64_SHA}"
+        echo "macOS ARM64 SHA256: ${MACOS_ARM64_SHA}"
+    
+    - name: Update Homebrew formula (if token available)
+      if: env.HOMEBREW_UPDATE_TOKEN != ''
+      uses: peter-evans/repository-dispatch@v3.0.0
+      with:
+        token: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
+        repository: metaneutrons/homebrew-tap
+        event-type: update-formula
+        client-payload: |
+          {
+            "formula": "autodoc",
+            "version": "${{ github.ref_name }}",
+            "macos_x64_sha": "${{ steps.checksums.outputs.macos_x64_sha }}",
+            "macos_arm64_sha": "${{ steps.checksums.outputs.macos_arm64_sha }}"
+          }
+      env:
+        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
+    
+    - name: Create Homebrew update instructions (fallback)
+      if: env.HOMEBREW_UPDATE_TOKEN == ''
+      env:
+        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
+      run: |
+        cat << EOF > homebrew-update.md
+        ## 🍺 Homebrew Formula Update Required
+        
+        **Version**: ${{ github.ref_name }}
+        **macOS x64 SHA256**: \`${{ steps.checksums.outputs.macos_x64_sha }}\`
+        **macOS ARM64 SHA256**: \`${{ steps.checksums.outputs.macos_arm64_sha }}\`
+        
+        ### Manual Update Steps:
+        
+        1. Go to [homebrew-tap repository](https://github.com/metaneutrons/homebrew-tap)
+        2. Edit \`autodoc.rb\`
+        3. Update version to: \`${{ github.ref_name }}\`
+        4. Update SHA256 checksums for both architectures
+        
+        ### Or use GitHub CLI:
+        
+        \`\`\`bash
+        gh workflow run update-formula.yml \\
+          --repo metaneutrons/homebrew-tap \\
+          --field formula=autodoc \\
+          --field version=${{ github.ref_name }} \\
+          --field macos_x64_sha=${{ steps.checksums.outputs.macos_x64_sha }} \\
+          --field macos_arm64_sha=${{ steps.checksums.outputs.macos_arm64_sha }}
+        \`\`\`
+        EOF
+    
+    - name: Upload Homebrew update instructions
+      uses: actions/upload-artifact@v4
+      with:
+        name: homebrew-update-instructions
+        path: homebrew-update.md
+        retention-days: 30
+    
+    - name: Display update information
+      env:
+        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
+      run: |
+        echo "## 🍺 Homebrew Update Information" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**macOS x64 SHA256**: \`${{ steps.checksums.outputs.macos_x64_sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**macOS ARM64 SHA256**: \`${{ steps.checksums.outputs.macos_arm64_sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [[ -n "$HOMEBREW_UPDATE_TOKEN" ]]; then
+          echo "✅ Homebrew formula updated automatically via repository dispatch." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "ℹ️ Homebrew formula needs to be updated manually. Check the homebrew-update-instructions artifact." >> $GITHUB_STEP_SUMMARY
+        fi

@@ -25,12 +25,20 @@ AutoDoc is a powerful Rust-based CLI tool that orchestrates Pandoc and XeLaTeX t
 
 ### Installation
 
+#### Homebrew (macOS/Linux)
 ```bash
-# Download from releases
-curl -L https://github.com/metaneutrons/autodoc/releases/latest/download/autodoc-linux-x86_64 -o autodoc
-chmod +x autodoc
+brew install metaneutrons/tap/autodoc
+```
 
-# Or build from source
+#### Download from releases
+```bash
+curl -L https://github.com/metaneutrons/autodoc/releases/latest/download/autodoc-linux-x86_64.tar.gz -o autodoc.tar.gz
+tar xzf autodoc.tar.gz
+sudo mv autodoc /usr/local/bin/
+```
+
+#### Build from source
+```bash
 git clone https://github.com/metaneutrons/autodoc.git
 cd autodoc
 cargo install --path .
