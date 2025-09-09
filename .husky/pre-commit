@@ -2,6 +2,16 @@
 
 echo "🔍 Pre-commit checks..."
 
+# Check if only non-code files are changed
+changed_files=$(git diff --cached --name-only)
+code_files=$(echo "$changed_files" | grep -v -E '\.(md|yml|yaml|json|txt)$|^\.github/|^docs/|^README|^LICENSE|^CHANGELOG')
+
+if [ -z "$code_files" ]; then
+    echo "📝 Only documentation/config files changed, skipping Rust compilation"
+    echo "✅ Pre-commit checks passed"
+    exit 0
+fi
+
 # Check if Rust compiles without errors
 echo "📦 Checking Rust compilation..."
 if ! cargo check --quiet; then
