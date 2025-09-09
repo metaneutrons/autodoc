@@ -66,6 +66,13 @@ impl DiagramProcessor {
         fs::write(&svg_path, &svg_content)?;
         debug!("Generated SVG: {}", svg_path.display());
 
+        // Convert SVG to PNG using resvg
+        if let Err(e) = self.convert_svg_to_png(&svg_content, output_dir, file_stem).await {
+            warn!("Failed to convert SVG to PNG: {}", e);
+        } else {
+            debug!("Generated PNG: {}/{}.png", output_dir.display(), file_stem);
+        }
+
         Ok(())
     }
 
@@ -104,5 +111,35 @@ impl DiagramProcessor {
         }
 
         Ok(processed_content)
+    }
+
+    async fn convert_svg_to_png(&self, svg_content: &str, output_dir: &Path, file_stem: &str) -> Result<()> {
+        use resvg::usvg::{self, TreeParsing};
+        
+        // Parse SVG
+        let opt = usvg::Options::default();
+        
+        let tree = usvg::Tree::from_str(svg_content, &opt)
+            .map_err(|e| AutoDocError::Build {
+                message: format!("Failed to parse SVG: {}", e),
+            })?;
+        
+        let size = tree.size;
+        let mut pixmap = resvg::tiny_skia::Pixmap::new(size.width() as u32, size.height() as u32)
+            .ok_or_else(|| AutoDocError::Build {
+                message: "Failed to create pixmap".to_string(),
+            })?;
+        
+        // Render SVG to pixmap
+        resvg::Tree::from_usvg(&tree).render(resvg::tiny_skia::Transform::default(), &mut pixmap.as_mut());
+        
+        // Save PNG
+        let png_path = output_dir.join(format!("{}.png", file_stem));
+        pixmap.save_png(&png_path)
+            .map_err(|e| AutoDocError::Build {
+                message: format!("Failed to save PNG: {}", e),
+            })?;
+        
+        Ok(())
     }
 }
