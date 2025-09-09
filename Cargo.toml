@@ -2,10 +2,21 @@
 name = "autodoc"
 version = "0.1.0"
 edition = "2021"
-description = "Autoamtic Document generation with Pandoc"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/your-username/autodoc"
-authors = ["Your Name <your.email@example.com>"]
+description = "Automatic document generation with Pandoc - convert Markdown to PDF, DOCX, HTML with Mermaid diagrams"
+license = "GPL-3.0"
+repository = "https://github.com/metaneutrons/autodoc"
+homepage = "https://github.com/metaneutrons/autodoc"
+documentation = "https://docs.rs/autodoc"
+readme = "README.md"
+keywords = ["pandoc", "markdown", "pdf", "documentation", "mermaid"]
+categories = ["command-line-utilities", "text-processing"]
+authors = ["metaneutrons"]
+exclude = [
+    "test-init/",
+    ".github/",
+    ".husky/",
+    "*.log"
+]
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
