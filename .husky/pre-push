@@ -8,5 +8,15 @@ if ! cargo test --bin docpilot -- --test-threads=1; then
     exit 1
 fi
 
+echo "🔒 Running security audit..."
+
+# Run security audit (only fail on actual vulnerabilities, allow warnings)
+if ! cargo audit; then
+    echo "❌ Security audit found vulnerabilities. Please review and fix security issues."
+    echo "💡 You can run 'cargo audit' locally to see details."
+    exit 1
+fi
+
 echo "✅ All tests passed"
+echo "✅ Security audit passed"
 echo "🚀 Ready to push"
