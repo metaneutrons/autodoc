@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "🧪 Running tests before push..."
+
+# Run all tests
+if ! cargo test; then
+    echo "❌ Tests failed. Fix failing tests before pushing."
+    exit 1
+fi
+
+echo "✅ All tests passed"
+echo "🚀 Ready to push"
