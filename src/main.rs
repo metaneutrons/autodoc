@@ -16,10 +16,17 @@ mod templates;
 
 use errors::{AutoDocError, Result};
 
+const VERSION: &str = concat!(
+    env!("CARGO_PKG_VERSION"),
+    " (",
+    env!("VERGEN_GIT_SHA"),
+    ")"
+);
+
 #[derive(Parser)]
 #[command(name = "autodoc")]
 #[command(about = "Enterprise-grade document generation with Pandoc")]
-#[command(version)]
+#[command(version = VERSION)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

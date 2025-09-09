@@ -33,4 +33,5 @@ notify = "6.0"
 tokio-test = "0.4"
 tempfile = "3.0"
 assert_cmd = "2.0"
-predicates = "3.0"
+[build-dependencies]
+vergen = { version = "8.0", features = ["git", "gitcl"] }
