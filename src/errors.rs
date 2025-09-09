@@ -20,6 +20,7 @@ pub enum AutoDocError {
     #[error("Dependency missing: {tool} - {hint}")]
     Dependency { tool: String, hint: String },
 
+    #[allow(dead_code)]
     #[error("File not found: {path}")]
     FileNotFound { path: String },
 }

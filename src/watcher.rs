@@ -78,10 +78,7 @@ impl FileWatcher {
 
     fn should_rebuild(&self, path: &Path) -> bool {
         if let Some(ext) = path.extension() {
-            match ext.to_str() {
-                Some("md") | Some("yaml") | Some("yml") => true,
-                _ => false,
-            }
+            matches!(ext.to_str(), Some("md") | Some("yaml") | Some("yml"))
         } else {
             false
         }

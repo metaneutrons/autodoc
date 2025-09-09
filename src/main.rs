@@ -1,5 +1,6 @@
+#![allow(clippy::uninlined_format_args)]
+
 use clap::{Parser, Subcommand};
-use std::fs;
 use std::path::PathBuf;
 use tracing::{error, info};
 

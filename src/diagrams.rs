@@ -84,6 +84,7 @@ impl DiagramProcessor {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn process_inline_mermaid(&self, content: &str) -> Result<String> {
         if self.mermaid.is_none() {
             return Ok(content.to_string());
@@ -110,12 +111,11 @@ impl DiagramProcessor {
                             .join("diagrams")
                             .join(&diagram_filename);
 
-                        if let Ok(_) = fs::create_dir_all(diagram_path.parent().unwrap()) {
-                            if let Ok(_) = fs::write(&diagram_path, &svg) {
-                                let replacement = format!("![Diagram]({})", diagram_path.display());
-                                processed_content =
-                                    processed_content.replace(&captures[0], &replacement);
-                            }
+                        if fs::create_dir_all(diagram_path.parent().unwrap()).is_ok()
+                            && fs::write(&diagram_path, &svg).is_ok() {
+                            let replacement = format!("![Diagram]({})", diagram_path.display());
+                            processed_content =
+                                processed_content.replace(&captures[0], &replacement);
                         }
                     }
                     Err(e) => {

@@ -49,12 +49,10 @@ impl FileDiscovery {
             let entry = entry?;
             let path = entry.path();
 
-            if path.extension().map_or(false, |ext| ext == "md") {
-                if !self.should_exclude(path) {
-                    debug!("Parsing markdown file: {:?}", path);
-                    let parsed_file = MetadataParser::parse_file(path)?;
-                    files.push(parsed_file);
-                }
+            if path.extension().is_some_and(|ext| ext == "md") && !self.should_exclude(path) {
+                debug!("Parsing markdown file: {:?}", path);
+                let parsed_file = MetadataParser::parse_file(path)?;
+                files.push(parsed_file);
             }
         }
 
@@ -76,7 +74,7 @@ impl FileDiscovery {
             let entry = entry?;
             let path = entry.path();
 
-            if path.extension().map_or(false, |ext| ext == "mmd") {
+            if path.extension().is_some_and(|ext| ext == "mmd") {
                 files.push(path.to_path_buf());
             }
         }
@@ -114,7 +112,7 @@ impl FileDiscovery {
 
                 if path
                     .extension()
-                    .map_or(false, |ext| ext == "latex" || ext == "tex")
+                    .is_some_and(|ext| ext == "latex" || ext == "tex")
                 {
                     files.push(path.to_path_buf());
                 }
@@ -176,13 +174,13 @@ impl MetadataParser {
     }
 
     fn extract_frontmatter(content: &str) -> Result<(DocumentMetadata, String)> {
-        if content.starts_with("---\n") {
-            if let Some(end) = content[4..].find("\n---\n") {
-                let yaml_content = &content[4..end + 4];
-                let remaining_content = &content[end + 8..];
+        if let Some(stripped) = content.strip_prefix("---\n") {
+            if let Some(end) = stripped.find("\n---\n") {
+                let yaml_content = &stripped[..end];
+                let remaining_content = &stripped[end + 5..];
 
                 let metadata: DocumentMetadata =
-                    serde_yaml::from_str(yaml_content).map_err(|e| AutoDocError::Yaml(e))?;
+                    serde_yaml::from_str(yaml_content).map_err(AutoDocError::Yaml)?;
 
                 return Ok((metadata, remaining_content.to_string()));
             }
@@ -222,7 +220,7 @@ impl MetadataParser {
                 if !url_str.starts_with("http") && !url_str.starts_with("mailto:") {
                     if let Some(base) = base_dir {
                         let path = base.join(url_str);
-                        if path.exists() && path.extension().map_or(false, |ext| ext == "md") {
+                        if path.exists() && path.extension().is_some_and(|ext| ext == "md") {
                             dependencies.push(path);
                         }
                     }
@@ -253,6 +251,7 @@ impl MetadataParser {
     }
 
     /// Extract project configuration from Markdown files (replaces autodoc.yml)
+    #[allow(dead_code)]
     pub fn extract_project_config(markdown_files: &[MarkdownFile]) -> ProjectConfig {
         let mut config = ProjectConfig::default();
 

@@ -104,10 +104,12 @@ impl AutoDocConfig {
         None
     }
 
+    #[allow(dead_code)]
     pub fn to_project_config(&self) -> ProjectConfig {
-        let mut config = ProjectConfig::default();
-
-        config.name = self.project.name.clone();
+        let mut config = ProjectConfig {
+            name: self.project.name.clone(),
+            ..Default::default()
+        };
 
         if let Some(output_dir) = &self.project.output_dir {
             config.output_dir = output_dir.clone();

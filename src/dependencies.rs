@@ -16,10 +16,10 @@ pub struct DependencyChecker;
 
 impl DependencyChecker {
     pub fn check_all() -> Result<Vec<DependencyStatus>> {
-        let mut deps = Vec::new();
-
-        deps.push(Self::check_pandoc()?);
-        deps.push(Self::check_xelatex()?);
+        let deps = vec![
+            Self::check_pandoc()?,
+            Self::check_xelatex()?,
+        ];
 
         Ok(deps)
     }

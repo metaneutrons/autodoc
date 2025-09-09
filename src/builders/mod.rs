@@ -60,15 +60,12 @@ impl PdfBuilder {
         output_path: &Path,
         metadata: &DocumentMetadata,
     ) -> Result<Vec<String>> {
-        let mut args = Vec::new();
-
-        // Basic options
-        args.push("--standalone".to_string());
-        args.push("--listings".to_string());
-
-        // PDF engine
-        args.push("--pdf-engine".to_string());
-        args.push("xelatex".to_string());
+        let mut args = vec![
+            "--standalone".to_string(),
+            "--listings".to_string(),
+            "--pdf-engine".to_string(),
+            "xelatex".to_string(),
+        ];
 
         // Template detection
         if let Some(template) = self.find_template()? {
@@ -193,7 +190,7 @@ impl PdfBuilder {
                 let entry = entry?;
                 let path = entry.path();
 
-                if path.extension().map_or(false, |ext| ext == "latex") {
+                if path.extension().is_some_and(|ext| ext == "latex") {
                     return Ok(Some(path));
                 }
             }
@@ -284,7 +281,7 @@ impl DocxBuilder {
                 let entry = entry?;
                 let path = entry.path();
 
-                if path.extension().map_or(false, |ext| ext == "docx") {
+                if path.extension().is_some_and(|ext| ext == "docx") {
                     return Ok(Some(path));
                 }
             }
@@ -338,14 +335,13 @@ impl HtmlBuilder {
         output_path: &Path,
         metadata: &DocumentMetadata,
     ) -> Result<Vec<String>> {
-        let mut args = Vec::new();
-
-        args.push("--standalone".to_string());
-        args.push("--to".to_string());
-        args.push("html5".to_string());
-
-        args.push("--self-contained".to_string());
-        args.push("--citeproc".to_string());
+        let mut args = vec![
+            "--standalone".to_string(),
+            "--to".to_string(),
+            "html5".to_string(),
+            "--self-contained".to_string(),
+            "--citeproc".to_string(),
+        ];
 
         if metadata.numbersections.unwrap_or(true) {
             args.push("--number-sections".to_string());
@@ -372,7 +368,7 @@ impl HtmlBuilder {
                 let entry = entry?;
                 let path = entry.path();
 
-                if path.extension().map_or(false, |ext| ext == "html") {
+                if path.extension().is_some_and(|ext| ext == "html") {
                     return Ok(Some(path));
                 }
             }

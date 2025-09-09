@@ -1,7 +1,4 @@
-use crate::config::ProjectConfig;
 use crate::errors::{AutoDocError, Result};
-use reqwest;
-use serde_json;
 use std::fs;
 use std::path::Path;
 use tempfile::TempDir;
@@ -285,6 +282,7 @@ Happy writing! 📝
     }
 }
 
+#[allow(dead_code)]
 pub fn initialize_project(name: &str) -> Result<()> {
     let rt = tokio::runtime::Runtime::new()?;
     let initializer = ProjectInitializer::new(name.to_string());

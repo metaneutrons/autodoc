@@ -1,5 +1,4 @@
 use crate::errors::{AutoDocError, Result};
-use reqwest;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, info};

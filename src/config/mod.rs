@@ -72,6 +72,7 @@ impl Default for ProjectConfig {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct MarkdownFile {
     pub path: PathBuf,
     pub metadata: DocumentMetadata,
@@ -82,6 +83,7 @@ pub struct MarkdownFile {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct DiscoveredFiles {
     pub markdown_files: Vec<MarkdownFile>,
     pub mermaid_files: Vec<PathBuf>,
