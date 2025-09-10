@@ -14,7 +14,7 @@ on:
         description: 'Use GitVersion for automatic versioning'
         required: false
         type: boolean
-        default: false
+        default: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      crates_version: ${{ steps.version.outputs.crates_version }}
       tag: ${{ steps.version.outputs.tag }}
     steps:
     - uses: actions/checkout@v4
@@ -47,17 +48,22 @@ jobs:
       run: |
         if [ "${{ inputs.use_gitversion }}" == "true" ]; then
           VERSION="${{ steps.gitversion.outputs.semVer }}"
+          CRATES_VERSION="${{ steps.gitversion.outputs.majorMinorPatch }}"
           TAG="v$VERSION"
         elif [ -n "${{ inputs.version }}" ]; then
           TAG="${{ inputs.version }}"
           VERSION="${TAG#v}"
+          CRATES_VERSION="$VERSION"
         else
           TAG="${GITHUB_REF#refs/tags/}"
           VERSION="${TAG#v}"
+          CRATES_VERSION="$VERSION"
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "crates_version=$CRATES_VERSION" >> $GITHUB_OUTPUT
         echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
+        echo "Crates Version: $CRATES_VERSION"
         echo "Tag: $TAG"
 
   build:
@@ -142,3 +148,60 @@ jobs:
           docpilot-macos-arm64/docpilot-macos-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to crates.io
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+    - name: Update Cargo.toml version
+      run: |
+        sed -i 's/^version = ".*"/version = "${{ needs.version.outputs.crates_version }}"/' Cargo.toml
+        echo "Updated Cargo.toml version to ${{ needs.version.outputs.crates_version }}"
+        grep "^version" Cargo.toml
+    - name: Publish to crates.io
+      run: cargo publish
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  update-homebrew:
+    name: Update Homebrew formula
+    needs: [version, release]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download macOS assets
+      run: |
+        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -o docpilot-macos-x64 \
+          "https://github.com/${{ github.repository }}/releases/download/${{ needs.version.outputs.tag }}/docpilot-macos-x64"
+        
+        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -o docpilot-macos-arm64 \
+          "https://github.com/${{ github.repository }}/releases/download/${{ needs.version.outputs.tag }}/docpilot-macos-arm64"
+    
+    - name: Calculate checksums
+      id: checksums
+      run: |
+        MACOS_X64_SHA=$(sha256sum docpilot-macos-x64 | cut -d' ' -f1)
+        MACOS_ARM64_SHA=$(sha256sum docpilot-macos-arm64 | cut -d' ' -f1)
+        echo "macos_x64_sha=${MACOS_X64_SHA}" >> $GITHUB_OUTPUT
+        echo "macos_arm64_sha=${MACOS_ARM64_SHA}" >> $GITHUB_OUTPUT
+    
+    - name: Update Homebrew formula
+      if: env.HOMEBREW_UPDATE_TOKEN != ''
+      uses: peter-evans/repository-dispatch@v3.0.0
+      with:
+        token: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
+        repository: metaneutrons/homebrew-tap
+        event-type: update-formula
+        client-payload: |
+          {
+            "formula": "docpilot",
+            "version": "${{ needs.version.outputs.tag }}",
+            "macos_x64_sha": "${{ steps.checksums.outputs.macos_x64_sha }}",
+            "macos_arm64_sha": "${{ steps.checksums.outputs.macos_arm64_sha }}"
+          }
+      env:
+        HOMEBREW_UPDATE_TOKEN: ${{ secrets.HOMEBREW_UPDATE_TOKEN }}
